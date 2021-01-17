@@ -27,6 +27,7 @@
 #include "constants.h"
 #include "newmatrix.h"
 #include "config.h"
+#include "string_safety.h"
 
 extern bool memory(struct char_data *ch, struct char_data *vict);
 extern class objList ObjList;
@@ -1049,7 +1050,7 @@ void johnson_update(void)
     /* Needs to come to 'work' */
     if ( rstart || quest_table[i].s_time > time_info.hours ) {
       if ( quest_table[i].s_string != NULL )
-        strcpy( buf, quest_table[i].s_string );
+        STRCPY( buf, quest_table[i].s_string );
       johnson = read_mobile( quest_table[i].johnson, REAL );
       MOB_FLAGS(johnson).SetBit(MOB_ISNPC);
       char_to_room( johnson, &world[quest_table[i].s_room] );
@@ -1057,7 +1058,7 @@ void johnson_update(void)
     /* Needs to head off */
     else if ( rend || quest_table[i].e_time < time_info.hours ) {
       if ( quest_table[i].e_string != NULL )
-        strcpy( buf, quest_table[i].e_string );
+        STRCPY( buf, quest_table[i].e_string );
       for ( johnson = character_list; johnson != NULL; johnson = johnson->next ) {
         if ( johnson->nr == (tmp = read_mobile( quest_table[i].johnson, REAL))->nr )
           break;
@@ -1415,7 +1416,7 @@ void qedit_list_obj_objectives(struct descriptor_data *d)
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%2d) ", i);
     switch (QUEST->obj[i].load) {
     case QUEST_NONE:
-      strcat(buf, "Load nothing");
+      STRCAT(buf, "Load nothing");
       break;
     case QOL_JOHNSON:
             snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "Give %ld to Johnson", QUEST->obj[i].vnum);
@@ -1429,8 +1430,8 @@ void qedit_list_obj_objectives(struct descriptor_data *d)
                 snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "(%s)", GET_NAME(mob_proto+rnum));
       }
       else
-        strcat(buf, "(null)");
-      strcat(buf, "(NOT A DELIVERY OBJECTIVE)");
+        STRCAT(buf, "(null)");
+      STRCAT(buf, "(NOT A DELIVERY OBJECTIVE)");
       break;
 
     case QOL_TARMOB_E:
@@ -1443,7 +1444,7 @@ void qedit_list_obj_objectives(struct descriptor_data *d)
                 GET_NAME(mob_proto+rnum));
       }
 
-      strcat(buf, "(null) ");
+      STRCAT(buf, "(null) ");
             snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "with %ld at %s", QUEST->obj[i].vnum,
               wear_bits[QUEST->obj[i].l_data2]);
       break;
@@ -1458,7 +1459,7 @@ void qedit_list_obj_objectives(struct descriptor_data *d)
                 snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "(%s)", GET_NAME(mob_proto+rnum));
       }
       else
-        strcat(buf, "(null)");
+        STRCAT(buf, "(null)");
 
       break;
     case QOL_HOST:
@@ -1473,10 +1474,10 @@ void qedit_list_obj_objectives(struct descriptor_data *d)
             QUEST->obj[i].nuyen, ((float)QUEST->obj[i].karma / 100));
     switch (QUEST->obj[i].objective) {
     case QUEST_NONE:
-      strcat(buf, "nothing\r\n");
+      STRCAT(buf, "nothing\r\n");
       break;
     case QOO_JOHNSON:
-      strcat(buf, "returning item to Johnson\r\n");
+      STRCAT(buf, "returning item to Johnson\r\n");
       break;
     case QOO_TAR_MOB:
             snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "delivering item %ld (%s) to M%d ",
@@ -1489,17 +1490,17 @@ void qedit_list_obj_objectives(struct descriptor_data *d)
                 snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "(%s)\r\n", GET_NAME(mob_proto+rnum));
       }
       else
-        strcat(buf, "(null)\r\n");
+        STRCAT(buf, "(null)\r\n");
       break;
     case QOO_LOCATION:
             snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "delivering item to room %d\r\n",
               QUEST->obj[i].o_data);
       break;
     case QOO_DSTRY_ONE:
-      strcat(buf, "destroying item\r\n");
+      STRCAT(buf, "destroying item\r\n");
       break;
     case QOO_DSTRY_MANY:
-      strcat(buf, "each item destroyed\r\n");
+      STRCAT(buf, "each item destroyed\r\n");
       break;
     case QOO_UPLOAD:
             snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "uploading to host %d\n\n", QUEST->obj[i].o_data);
@@ -1525,7 +1526,7 @@ void qedit_list_mob_objectives(struct descriptor_data *d)
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%2d) ", i);
     switch (QUEST->mob[i].load) {
     case QUEST_NONE:
-      strcat(buf, "Not set");
+      STRCAT(buf, "Not set");
       break;
     case QML_LOCATION:
             snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "Load %ld (%s) at room %d",
@@ -1576,7 +1577,7 @@ void qedit_list_mob_objectives(struct descriptor_data *d)
           (rnum = real_mobile(QUEST->mob[QUEST->mob[i].o_data].vnum)) > -1) {
                 snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "(%s)\r\n", GET_NAME(mob_proto+rnum));
       } else
-        strcat(buf, "(null)\r\n");
+        STRCAT(buf, "(null)\r\n");
       break;
     }
   }
@@ -1722,11 +1723,11 @@ void qedit_disp_menu(struct descriptor_data *d)
    */
   if ( QUEST->s_time == -1 )
   {
-    strcpy(s_time,"Random");
+    STRCPY(s_time,"Random");
     e_time[0] = '\0';
   } else if ( QUEST->s_time == QUEST->e_time )
   {
-    strcpy(s_time,"Always");
+    STRCPY(s_time,"Always");
     e_time[0] = '\0';
   } else
   {

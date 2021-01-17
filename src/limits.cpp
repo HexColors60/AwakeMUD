@@ -36,6 +36,7 @@
 #include "newmail.h"
 #include <sys/time.h>
 #include "config.h"
+#include "string_safety.h"
 
 extern class objList ObjList;
 extern int modify_target(struct char_data *ch);
@@ -1087,7 +1088,7 @@ void update_paydata_market() {
     return;
   }
   
-  strncpy(buf, "Updating paydata markets:", sizeof(buf) - 1);
+  STRCPY(buf, "Updating paydata markets:");
   bool something_changed = FALSE;
 
   for (int m = 0; m < 5; m++) {
@@ -1163,7 +1164,7 @@ void misc_update(void)
               sus->other->points.fire[0] = srdice();
               sus->other->points.fire[1] = 0;
             } else {
-              strcpy(buf, spells[sus->spell].name);
+              STRCPY(buf, spells[sus->spell].name);
               send_to_char(ch, "The effects of %s become permanent.\r\n", buf);
             }
             GET_SUSTAINED_NUM(ch)--;

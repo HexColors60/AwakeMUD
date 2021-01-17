@@ -56,6 +56,7 @@
 #include <new>
 #include "transport.h"
 #include "bullet_pants.h"
+#include "string_safety.h"
 
 extern void calc_weight(struct char_data *ch);
 extern void read_spells(struct char_data *ch);
@@ -1278,7 +1279,7 @@ void parse_room(File &fl, long nr)
       snprintf(field, sizeof(field), "%s/Keywords", sect);
       char *keywords = str_dup(data.GetString(field, NULL));
 
-      if (!*keywords) {
+      if (!keywords || !*keywords) {
         log_vfprintf("Room #%d's extra description #%d had no keywords -- skipping",
             nr, i);
         DELETE_ARRAY_IF_EXTANT(keywords);
@@ -1318,7 +1319,7 @@ void setup_dir(FILE * fl, int room, int dir)
   world[room].dir_option[dir]->general_description = fread_string(fl, buf2);
   world[room].dir_option[dir]->keyword = fread_string(fl, buf2);
 
-  if (!get_line(fl, line)) {
+  if (!get_line(fl, line, sizeof(line))) {
     fprintf(stderr, "FATAL ERROR: Format error, %s: Cannot get line from file.\n", buf2);
     shutdown();
   }
@@ -1848,7 +1849,7 @@ void parse_object(File &fl, long nr)
         DELETE_ARRAY_IF_EXTANT(obj->text.room_desc);
         obj->text.room_desc = str_dup(buf);
         
-        strcpy(buf, "A hefty box of ammunition, banded in metal and secured with flip-down hasps for transportation and storage.");
+        STRCPY(buf, "A hefty box of ammunition, banded in metal and secured with flip-down hasps for transportation and storage.");
         // log_vfprintf("Changing %s to %s for %ld.", obj->text.look_desc, buf, nr);
         DELETE_ARRAY_IF_EXTANT(obj->text.look_desc);
         obj->text.look_desc = str_dup(buf);
@@ -2635,7 +2636,7 @@ int vnum_object_armors(char *searchname, struct char_data * ch)
     if (GET_OBJ_VAL(&obj_proto[nr],0) + GET_OBJ_VAL(&obj_proto[nr],1) <= 20)
       continue;
     
-    sprint_obj_mods( &obj_proto[nr], xbuf );
+    sprint_obj_mods( &obj_proto[nr], xbuf, sizeof(xbuf));
     
     ++found;
     snprintf(buf, sizeof(buf), "[%5ld -%2d] %2d %d %s%s%s\r\n",
@@ -2657,7 +2658,7 @@ int vnum_object_armors(char *searchname, struct char_data * ch)
       if (GET_OBJ_VAL(&obj_proto[nr],0) + GET_OBJ_VAL(&obj_proto[nr],1) != total)
         continue;
       
-      sprint_obj_mods( &obj_proto[nr], xbuf );
+      sprint_obj_mods( &obj_proto[nr], xbuf , sizeof(xbuf));
       
       ++found;
       snprintf(buf, sizeof(buf), "[%5ld -%2d] %2d %d %s%s\r\n",
@@ -2776,7 +2777,7 @@ int vnum_object_affectloc(int type, struct char_data * ch)
           if (obj_proto[nr].affected[i].modifier > mod && mod != 11)
             continue;
 
-          sprint_obj_mods( &obj_proto[nr], xbuf );
+          sprint_obj_mods( &obj_proto[nr], xbuf, sizeof(xbuf) );
 
           ++found;
           snprintf(buf, sizeof(buf), "[%5ld -%2d] %s%s%s\r\n",
@@ -2804,7 +2805,7 @@ int vnum_object_affects(struct char_data *ch) {
     
     for (int i = 0; i < MAX_OBJ_AFFECT; i++) {
       if (obj_proto[nr].affected[i].modifier != 0 ) {
-        sprint_obj_mods( &obj_proto[nr], xbuf );
+        sprint_obj_mods( &obj_proto[nr], xbuf, sizeof(xbuf) );
         
         ++found;
         snprintf(buf, sizeof(buf), "[%5ld -%2d] %s%s%s\r\n",
@@ -3872,7 +3873,7 @@ char *fread_string(FILE * fl, char *error)
   if (strlen(buf) > 0) {
     rslt = new char[length + 1];
     memset(rslt, 0, sizeof(char) * (length + 1));
-    strcpy(rslt, buf);
+    STRCPY(rslt, buf);
   } else
     rslt = NULL;
 
@@ -4226,7 +4227,7 @@ int file_to_string(const char *name, char *buf)
   do {
     fgets(tmp, sizeof(tmp) - 1, fl);
     tmp[strlen(tmp) - 1] = '\0';/* take off the trailing \n */
-    strcat(tmp, "\r\n");
+    STRCAT(tmp, "\r\n");
 
     if (!feof(fl)) {
       if (strlen(buf) + strlen(tmp) + 1 > MAX_STRING_LENGTH) {
@@ -4234,7 +4235,7 @@ int file_to_string(const char *name, char *buf)
         *buf = '\0';
         return (-1);
       }
-      strcat(buf, tmp);
+      STRCAT(buf, tmp);
     }
   } while (!feof(fl));
 
@@ -4665,7 +4666,7 @@ void load_saved_veh()
     log("SYSERR: Could not open vfile for reading.");
     return;
   }
-  if (!get_line(fl, buf)) {
+  if (!get_line(fl, buf, sizeof(buf))) {
     log("SYSERR: Invalid Entry In Vfile.");
     return;
   }

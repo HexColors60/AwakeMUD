@@ -26,6 +26,7 @@
 #include "limits.h"
 #include "config.h"
 #include "transport.h"
+#include "string_safety.h"
 
 /*   external vars  */
 ACMD_DECLARE(do_goto);
@@ -1069,10 +1070,10 @@ SPECIAL(spell_trainer)
   } else {
     char *s, buf[MAX_STRING_LENGTH], buf1[MAX_STRING_LENGTH];
     if (strtok(argument, "\"") && (s = strtok(NULL, "\""))) {
-      strcpy(buf, s);
+      STRCPY(buf, s);
       if ((s = strtok(NULL, "\0"))) {
         skip_spaces(&s);
-        strcpy(buf1, s);
+        STRCPY(buf1, s);
       } else
         *buf1 = '\0';
     } else
@@ -3786,7 +3787,7 @@ SPECIAL(quest_debug_scanner)
       snprintf(buf, sizeof(buf), "NPC %s's quest-related information:\r\n", GET_CHAR_NAME(to));
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "SPARE1: %ld, SPARE2: %ld (corresponds to quest vnum %ld)\r\n",
               GET_SPARE1(to), GET_SPARE2(to), GET_SPARE2(to) ? quest_table[GET_SPARE2(to)].vnum : -1);
-      strcat(buf, "NPC's memory records hold the following character IDs: \r\n");
+      STRCAT(buf, "NPC's memory records hold the following character IDs: \r\n");
       for (memory_rec *tmp = MEMORY(to); tmp; tmp = tmp->next)
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " %ld\r\n", tmp->id);
       send_to_char(buf, ch);
@@ -3801,7 +3802,7 @@ SPECIAL(quest_debug_scanner)
               real_mob >= 0 ? mob_proto[real_mob].player.physical_text.name : "N/A", 
               quest_table[GET_QUEST(to)].johnson);
     } else {
-      strcat(buf, "Not currently on a quest.\r\n");
+      STRCAT(buf, "Not currently on a quest.\r\n");
     }
     
     send_to_char(buf, ch);

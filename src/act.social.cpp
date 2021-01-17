@@ -20,6 +20,7 @@
 #include "handler.h"
 #include "db.h"
 #include "awake.h"
+#include "string_safety.h"
 
 /* extern variables */
 extern struct room_data *world;
@@ -313,7 +314,7 @@ char *fread_action(FILE * fl, int nr)
   else {
     *(buf + strlen(buf) - 1) = '\0';
     rslt = new char[strlen(buf) + 1];
-    strcpy(rslt, buf);
+    STRCPY(rslt, buf);
     return (rslt);
   }
 }

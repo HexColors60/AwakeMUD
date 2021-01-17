@@ -9,6 +9,8 @@
 
 #include <mysql/mysql.h>
 
+#include "string_safety.h"
+
 class File;
 
 class DBIndex
@@ -46,7 +48,7 @@ private:
 
     entry &operator=(const entry &two)
     {
-      strcpy(name, two.name);
+      STRCPY(name, two.name);
       id = two.id;
       level = two.level;
       flags = two.flags;

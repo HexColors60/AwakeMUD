@@ -29,6 +29,7 @@
 #include "utils.h"
 #include "constants.h"
 #include "config.h"
+#include "string_safety.h"
 
 SPECIAL(call_elevator);
 SPECIAL(elevator_spec);
@@ -280,9 +281,9 @@ SPECIAL(taxi_sign) {
   }
   
   // Set up our default string.
-  strncpy(buf, "The keyword for each location is listed after the location name.  Say the keyword to the driver, and for a small fee, he will drive you to your destination.\r\n", sizeof(buf) - 1);
+  STRCPY(buf, "The keyword for each location is listed after the location name.  Say the keyword to the driver, and for a small fee, he will drive you to your destination.\r\n");
   if (!PRF_FLAGGED(ch, PRF_SCREENREADER))
-    strncat(buf, "-------------------------------------------------\r\n", sizeof(buf) - strlen(buf) - 1);
+    STRCAT(buf, "-------------------------------------------------\r\n");
   
   bool is_first_printed_dest_title = TRUE;
   
@@ -326,7 +327,7 @@ SPECIAL(taxi_sign) {
   }
   
   // Finally, tack on a newline and send it all to the character!
-  strcat(buf, "\r\n");
+  STRCAT(buf, "\r\n");
   send_to_char(buf, ch);
   
   return TRUE;
@@ -804,7 +805,7 @@ SPECIAL(taxi)
           comm = CMD_TAXI_DEST;
           found = TRUE;
           do_say(ch, argument, 0, 0);
-          strncpy(buf2, " punches a few buttons on the meter, calculating the fare.", sizeof(buf2));
+          STRCPY(buf2, " punches a few buttons on the meter, calculating the fare.");
           do_echo(driver, buf2, 0, SCMD_EMOTE);
           break;
         }
@@ -965,7 +966,7 @@ static void init_elevators(void)
     shutdown();
   }
 
-  if (!get_line(fl, line) || sscanf(line, "%d", &num_elevators) != 1) {
+  if (!get_line(fl, line, sizeof(line)) || sscanf(line, "%d", &num_elevators) != 1) {
     log("Error at beginning of elevator file.");
     shutdown();
   }
@@ -979,7 +980,7 @@ static void init_elevators(void)
   elevator = new struct elevator_data[num_elevators];
 
   for (i = 0; i < num_elevators && !feof(fl); i++) {
-    get_line(fl, line);
+    get_line(fl, line, sizeof(line));
     if (sscanf(line, "%ld %d %d %d", &room, t, t + 1, t + 2) != 4) {
       fprintf(stderr, "Format error in elevator #%d, expecting # # # #\n", i);
       shutdown();
@@ -1010,7 +1011,7 @@ static void init_elevators(void)
     if (elevator[i].num_floors > 0) {
       elevator[i].floor = new struct floor_data[elevator[i].num_floors];
       for (j = 0; j < elevator[i].num_floors; j++) {
-        get_line(fl, line);
+        get_line(fl, line, sizeof(line));
         if (sscanf(line, "%ld %ld %d", &room, &shaft_vnum, t + 1) != 3) {
           fprintf(stderr, "Format error in elevator #%d, floor #%d\n", i, j);
           shutdown();
@@ -1552,7 +1553,7 @@ int process_elevator(struct room_data *room,
       number = elevator[num].num_floors + elevator[num].start_floor + number - 1;
     }
     else if (LOWER(*argument) == 'g' && elevator[num].start_floor <= 0) {
-      strcpy(floorstring, "G");
+      STRCPY(floorstring, "G");
       number = elevator[num].num_floors + elevator[num].start_floor - 1;
     } else if ((number = atoi(argument)) > 0) {
       snprintf(floorstring, sizeof(floorstring), "%d", number);
@@ -1607,7 +1608,7 @@ int process_elevator(struct room_data *room,
                    || !strn_cmp("buttons", arg, strlen(arg)) || !strn_cmp("controls", arg, strlen(arg))))
       return FALSE;
 
-    strcpy(buf, "The elevator panel displays the following buttons:\r\n");
+    STRCPY(buf, "The elevator panel displays the following buttons:\r\n");
     number = 0;
     for (floor = 0; floor < elevator[num].num_floors; floor++)
       if (elevator[num].floor[floor].vnum > -1) {
@@ -1620,10 +1621,10 @@ int process_elevator(struct room_data *room,
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "  %-2d", temp);
         number++;
         if (!(number % elevator[num].columns) || PRF_FLAGGED(ch, PRF_SCREENREADER))
-          strcat(buf, "\r\n");
+          STRCAT(buf, "\r\n");
       }
     if ((number % elevator[num].columns) && !PRF_FLAGGED(ch, PRF_SCREENREADER))
-      strcat(buf, "\r\n");
+      STRCAT(buf, "\r\n");
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "\r\n(OPEN)%s(CLOSE)\r\n\r\n", PRF_FLAGGED(ch, PRF_SCREENREADER) ? "\r\n" : "  ");
     temp = room->rating + 1 - elevator[num].num_floors - elevator[num].start_floor;
     if (temp > 0)

@@ -2,6 +2,8 @@
 // author: Andrew Hynek
 // contents: a value table (VTable) class
 
+#include "string_safety.h"
+
 #ifndef __vtable_h__
 #define __vtable_h__
 
@@ -30,17 +32,17 @@ class VTable
     field &operator=(const field &two)
     {
       // do a deep copy
-      strcpy(name, two.name);
-      strcpy(line, two.line);
+      STRCPY(name, two.name);
+      STRCPY(line, two.line);
 
       if (two.multiline) {
         if (!multiline) {
           multiline = new char[strlen(two.multiline)+1];
-          strcpy(multiline, two.multiline);
+          STRCPY(multiline, two.multiline);
         } else if (strcmp(multiline, two.multiline)) {
           delete [] multiline;
           multiline = new char[strlen(two.multiline)+1];
-          strcpy(multiline, two.multiline);
+          STRCPY(multiline, two.multiline);
         }
       } else if (multiline) {
         delete [] multiline;
@@ -75,7 +77,7 @@ class VTable
 
     section &operator=(const section &two)
     {
-      strcpy(name, two.name);
+      STRCPY(name, two.name);
 
       parent = two.parent;
 

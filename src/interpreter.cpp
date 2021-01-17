@@ -37,6 +37,7 @@
 #include "newdb.h"
 #include "helpedit.h"
 #include "archetypes.h"
+#include "string_safety.h"
 
 #if defined(__CYGWIN__)
 #include <crypt.h>
@@ -1700,7 +1701,8 @@ void perform_complex_alias(struct txt_q *input_q, char *orig, struct alias *a)
   skip_spaces(&orig);
 
   /* First, parse the original string */
-  temp = strtok(strcpy(buf2, orig), " ");
+  STRCPY(buf2, orig);
+  temp = strtok(buf2, " ");
   while (temp != NULL && num_of_tokens < NUM_TOKENS)
   {
     tokens[num_of_tokens++] = temp;
@@ -1721,10 +1723,10 @@ void perform_complex_alias(struct txt_q *input_q, char *orig, struct alias *a)
     } else if (*temp == ALIAS_VAR_CHAR) {
       temp++;
       if ((num = *temp - '1') < num_of_tokens && num >= 0) {
-        strcpy(write_point, tokens[num]);
+        STRCPY(write_point, tokens[num]);
         write_point += strlen(tokens[num]);
       } else if (*temp == ALIAS_GLOB_CHAR) {
-        strcpy(write_point, orig);
+        STRCPY(write_point, orig);
         write_point += strlen(orig);
       } else if ((*(write_point++) = *temp) == '$') /* redouble $ for act safety */
         *(write_point++) = '$';
@@ -1778,7 +1780,7 @@ int perform_alias(struct descriptor_data * d, char *orig)
 
   if (a->type == ALIAS_SIMPLE)
   {
-    strcpy(orig, a->replacement);
+    STRCPY(orig, a->replacement);
     return 0;
   } else
   {
@@ -1976,7 +1978,7 @@ void half_chop(char *string, char *arg1, char *arg2)
 
   temp = any_one_arg(string, arg1);
   skip_spaces(&temp);
-  strcpy(arg2, temp);
+  STRCPY(arg2, temp);
 }
 
 /* Used in specprocs, mostly.  (Exactly) matches "command" to cmd number */
@@ -2365,9 +2367,10 @@ void nanny(struct descriptor_data * d, char *arg)
         return;
       }
     } else {
+      STRCPY(buf, tmp_name);
       if ((_parse_name(arg, tmp_name)) || strlen(tmp_name) < 2 ||
           strlen(tmp_name) > MAX_NAME_LENGTH-1 ||
-          fill_word(strcpy(buf, tmp_name)) || reserved_word(buf)) {
+          fill_word(buf) || reserved_word(buf)) {
         d->invalid_name++;
         if (d->invalid_name > 3)
           close_socket(d);
@@ -2408,7 +2411,7 @@ void nanny(struct descriptor_data * d, char *arg)
         }
 
         d->character->player.char_name = new char[strlen(tmp_name) + 1];
-        strcpy(d->character->player.char_name, CAP(tmp_name));
+        STRCPY(d->character->player.char_name, CAP(tmp_name));
 
         snprintf(buf, sizeof(buf), "Did I get that right, %s (Y/N)? ", tmp_name);
         SEND_TO_Q(buf, d);
@@ -2681,7 +2684,7 @@ void nanny(struct descriptor_data * d, char *arg)
           return;
         }
         char char_name[strlen(GET_CHAR_NAME(d->character))+1];
-        strcpy(char_name, GET_CHAR_NAME(d->character));
+        STRCPY(char_name, GET_CHAR_NAME(d->character));
         free_char(d->character);
         d->character = playerDB.LoadChar(char_name, false);
         d->character->desc = d;
@@ -2997,7 +3000,7 @@ void log_command(struct char_data *ch, const char *argument, const char *tcname)
   if (ch->desc && ch->desc->original)
     snprintf(name_buf, sizeof(name_buf), "%s (as %s)", GET_CHAR_NAME(ch->desc->original), GET_NAME(ch));
   else
-    strncpy(name_buf, GET_CHAR_NAME(ch), sizeof(name_buf) - 1);
+    STRCPY(name_buf, GET_CHAR_NAME(ch));
 
   // Write the command to the buffer.
   char cmd_buf[MAX_INPUT_LENGTH * 3];

@@ -28,6 +28,7 @@
 #include "newmagic.h"
 #include "playergroups.h"
 #include "config.h"
+#include "string_safety.h"
 
 /* external functions */
 extern void stop_fighting(struct char_data * ch);
@@ -49,7 +50,7 @@ char *fname(char *namelist)
   
   if (!namelist || !*namelist) {
     mudlog("SYSERR: fname received null namelist!", NULL, LOG_SYSLOG, TRUE);
-    strcpy(holder, "error-report-this-to-staff");
+    STRCPY(holder, "error-report-this-to-staff");
     return holder;
   }
   
@@ -1237,7 +1238,7 @@ bool check_obj_to_x_preconditions(struct obj_data * object, struct char_data *ch
   
   // Fail if the object already has next_content. This implies that it's part of someone else's linked list-- never merge them!
   if (object->next_content) {
-    strcat(ENDOF(buf3), "It's already part of a next_content linked list.");
+    STRCAT(buf3, "It's already part of a next_content linked list.");
     mudlog(buf3, ch, LOG_SYSLOG, TRUE);
     return FALSE;
   }
@@ -1263,7 +1264,7 @@ bool check_obj_to_x_preconditions(struct obj_data * object, struct char_data *ch
     return FALSE;
   }
   
-  strcpy(buf3, "");
+  STRCPY(buf3, "");
   return TRUE;
 }
 
@@ -1599,8 +1600,8 @@ int get_number(char **name)
   
   if ((ppos = strchr(*name, '.'))) {
     *ppos++ = '\0';
-    strcpy(number, *name);
-    strcpy(*name, ppos);
+    STRCPY(number, *name);
+    STRCPY(*name, ppos);
     
     for (i = 0; *(number + i); i++)
       if (!isdigit(*(number + i)))
@@ -1621,10 +1622,10 @@ struct veh_data *get_veh_list(char *name, struct veh_data *list, struct char_dat
   
   if (!list)
     return NULL;
-  strcpy(tmp, name);
+  STRCPY(tmp, name);
   if (!strncmp(tmp, "my.", 3)) {
     mine = TRUE;
-    strcpy(tmp, name+3);
+    STRCPY(tmp, name+3);
   }
   if (!(number = get_number(&tmp)))
     return NULL;
@@ -1679,7 +1680,7 @@ struct char_data *get_char_room(const char *name, struct room_data *room)
     return NULL;
   }
   
-  strcpy(tmp, name);
+  STRCPY(tmp, name);
   if (!(number = get_number(&tmp)))
     return NULL;
   
@@ -1987,7 +1988,7 @@ void extract_veh(struct veh_data * veh)
 {
   if (veh->in_room == NULL && veh->in_veh == NULL) {
     if (veh->carriedvehs || veh->people) {
-      strncpy(buf, "SYSERR: extract_veh called on vehicle-with-contents without containing room or veh! The game will likely now shit itself and die; GLHF.", sizeof(buf));
+      STRCPY(buf, "SYSERR: extract_veh called on vehicle-with-contents without containing room or veh! The game will likely now shit itself and die; GLHF.");
       mudlog(buf, NULL, LOG_SYSLOG, TRUE);
     }
   }
@@ -2048,7 +2049,7 @@ void extract_veh(struct veh_data * veh)
   
   // Unhitch its tows.
   if (veh->towing) {
-    strcpy(buf3, GET_VEH_NAME(veh));
+    STRCPY(buf3, GET_VEH_NAME(veh));
     snprintf(buf, sizeof(buf), "%s falls from %s's towing equipment.\r\n", GET_VEH_NAME(veh->towing), buf3);
     if (ch->in_veh->in_room) {
       act(buf, FALSE, ch->in_veh->in_room->people, 0, 0, TO_ROOM);
@@ -2424,7 +2425,7 @@ struct char_data *get_char_room_vis(struct char_data * ch, char *name)
     return ch;
   
   /* 0.<name> means PC with name */
-  strcpy(tmp, name);
+  STRCPY(tmp, name);
   if (!(number = get_number(&tmp)))
     return get_player_vis(ch, tmp, 1);
   
@@ -2452,7 +2453,7 @@ struct char_data *get_char_in_list_vis(struct char_data * ch, char *name, struct
     return ch;
   
   /* 0.<name> means PC with name */
-  strcpy(tmp, name);
+  STRCPY(tmp, name);
   if (!(number = get_number(&tmp)))
     return get_player_vis(ch, tmp, 1);
   
@@ -2484,7 +2485,7 @@ struct char_data *get_char_vis(struct char_data * ch, char *name)
   if ((i = get_char_room_vis(ch, name)) != NULL)
     return i;
   
-  strcpy(tmp, name);
+  STRCPY(tmp, name);
   if (!(number = get_number(&tmp)))
     return get_player_vis(ch, tmp, 0);
   
@@ -2504,7 +2505,7 @@ struct obj_data *get_obj_in_list_vis(struct char_data * ch, char *name, struct o
   char tmpname[MAX_INPUT_LENGTH];
   char *tmp = tmpname;
   
-  strcpy(tmp, name);
+  STRCPY(tmp, name);
   if (!(number = get_number(&tmp)))
     return NULL;
   
@@ -2534,7 +2535,7 @@ struct obj_data *get_obj_vis(struct char_data * ch, char *name)
   if (ch->in_room && (i = get_obj_in_list_vis(ch, name, ch->in_room->contents)))
     return i;
   
-  strcpy(tmp, name);
+  STRCPY(tmp, name);
   if (!(number = get_number(&tmp)))
     return NULL;
   
@@ -2549,7 +2550,7 @@ struct obj_data *get_object_in_equip_vis(struct char_data * ch,
   char *tmp = tmpname;
   int i = 0, number;
   
-  strcpy(tmp, arg);
+  STRCPY(tmp, arg);
   if (!(number = get_number(&tmp)))
     return NULL;
   
@@ -2766,7 +2767,7 @@ int generic_find(char *arg, int bitvector, struct char_data * ch,
     char *tmp = tmpname;
     
     /* 0.<name> means PC with name-- except here we're overriding that because I cannot be bothered right now. TODO. --LS */
-    strcpy(tmp, name);
+    STRCPY(tmp, name);
     number = MAX(1, get_number(&tmp));
     
     for (i = get_ch_in_room(ch)->people; i && j <= number; i = i->next_in_room)
@@ -2823,8 +2824,8 @@ int find_all_dots(char *arg)
   if (!strcmp(arg, "all"))
     return FIND_ALL;
   else if (!strncmp(arg, "all.", 4)) {
-    strcpy(buf, arg + 4);
-    strcpy(arg, buf);
+    STRCPY(buf, arg + 4);
+    STRCPY(arg, buf);
     return FIND_ALLDOT;
   } else
     return FIND_INDIV;

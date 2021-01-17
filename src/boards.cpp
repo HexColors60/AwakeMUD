@@ -48,6 +48,7 @@ TO ADD A NEW BOARD, simply follow our easy 4-step program:
 #include "handler.h"
 #include "awake.h"
 #include "newmatrix.h"
+#include "string_safety.h"
 
 /* format:      vnum, read lvl, write lvl, remove lvl, filename
    Be sure to also change NUM_OF_BOARDS in awake.h */
@@ -273,7 +274,7 @@ void Board_write_message(int board_type, struct obj_data *terminal,
     msg_storage_taken[NEW_MSG_INDEX(board_type).slot_num] = 0;
     return;
   }
-  strcpy(NEW_MSG_INDEX(board_type).heading, buf);
+  STRCPY(NEW_MSG_INDEX(board_type).heading, buf);
   NEW_MSG_INDEX(board_type).heading[len - 1] = '\0';
   NEW_MSG_INDEX(board_type).level = GET_LEVEL(ch);
 
@@ -403,7 +404,7 @@ int Board_reply_message(int board_type, struct obj_data *terminal,
     msg_storage_taken[NEW_MSG_INDEX(board_type).slot_num] = 0;
     return 1;
   }
-  strcpy(NEW_MSG_INDEX(board_type).heading, buf);
+  STRCPY(NEW_MSG_INDEX(board_type).heading, buf);
   NEW_MSG_INDEX(board_type).heading[len - 1] = '\0';
   NEW_MSG_INDEX(board_type).level = GET_LEVEL(ch);
 

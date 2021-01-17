@@ -30,6 +30,7 @@
 #include "constants.h"
 #include "comm.h"
 #include "protocol.h"
+#include "string_safety.h"
 
 /******************************************************************************
  The following section is for Diku/Merc derivatives.  Replace as needed.

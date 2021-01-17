@@ -23,6 +23,7 @@
 #include "interpreter.h" // for alias
 #include "config.h"
 #include "bullet_pants.h"
+#include "string_safety.h"
 
 /* mysql_config.h must be filled out with your own connection info. */
 /* For obvious reasons, DO NOT ADD THIS FILE TO SOURCE CONTROL AFTER CUSTOMIZATION. */
@@ -150,7 +151,7 @@ static void init_char_strings(char_data *ch)
   size_t len = strlen(GET_CHAR_NAME(ch)) + 1; // + strlen(race) + 2;
   ch->player.physical_text.keywords = new char[len];
 
-  strcpy(ch->player.physical_text.keywords, GET_CHAR_NAME(ch));
+  STRCPY(ch->player.physical_text.keywords, GET_CHAR_NAME(ch));
   *(ch->player.physical_text.keywords) = LOWER(*ch->player.physical_text.keywords);
 
   if (ch->player.physical_text.name)
@@ -392,7 +393,7 @@ bool load_char(const char *name, char_data *ch, bool logon)
   }
   GET_IDNUM(ch) = atoi(row[0]);
   ch->player.char_name = str_dup(row[1]);
-  strcpy(GET_PASSWD(ch), row[2]);
+  STRCPY(GET_PASSWD(ch), row[2]);
   GET_RACE(ch) = atoi(row[3]);
   GET_SEX(ch) = atoi(row[4]);
   GET_LEVEL(ch) = atoi(row[5]);
@@ -1145,16 +1146,16 @@ static bool save_char(char_data *player, DBIndex::vnum_t loadroom)
   if (GET_SKILL_DIRTY_BIT(player)) {
     snprintf(buf, sizeof(buf), "DELETE FROM pfiles_skills WHERE idnum=%ld", GET_IDNUM(player));
     mysql_wrapper(mysql, buf);
-    strcpy(buf, "INSERT INTO pfiles_skills (idnum, skillnum, rank) VALUES (");
+    STRCPY(buf, "INSERT INTO pfiles_skills (idnum, skillnum, rank) VALUES (");
     for (i = MIN_SKILLS; i < MAX_SKILLS; i++)
       if (GET_SKILL(player, i)) {
         if (q)
-          strcat(buf, "), (");
+          STRCAT(buf, "), (");
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld, %d, %d", GET_IDNUM(player), i, REAL_SKILL(player, i));
         q = 1;
       }
     if (q) {
-      strcat(buf, ");");
+      STRCAT(buf, ");");
       mysql_wrapper(mysql, buf);
     }
     GET_SKILL_DIRTY_BIT(player) = FALSE;
@@ -1166,12 +1167,12 @@ static bool save_char(char_data *player, DBIndex::vnum_t loadroom)
   
   snprintf(buf, sizeof(buf), "DELETE FROM pfiles_drugs WHERE idnum=%ld", GET_IDNUM(player));
   mysql_wrapper(mysql, buf);
-  strcpy(buf, "INSERT INTO pfiles_drugs (idnum, DrugType, Addict, Doses, Edge, LastFix, Addtime, Tolerant, LastWith) VALUES (");
+  STRCPY(buf, "INSERT INTO pfiles_drugs (idnum, DrugType, Addict, Doses, Edge, LastFix, Addtime, Tolerant, LastWith) VALUES (");
   for (i = 1, q = 0; i < NUM_DRUGS; i++) {    
     if (GET_DRUG_DOSES(player, i) || GET_DRUG_EDGE(player, i) || GET_DRUG_ADDICT(player, i) || GET_DRUG_LASTFIX(player, i) || 
         GET_DRUG_ADDTIME(player, i) || GET_DRUG_TOLERANT(player, i) || GET_DRUG_LASTWITH(player, i)) {
       if (q)
-        strcat(buf, "), (");
+        STRCAT(buf, "), (");
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld, %d, %d, %d, %d, %d, %d, %d, %d", GET_IDNUM(player), i, GET_DRUG_ADDICT(player, i), 
                           GET_DRUG_DOSES(player, i), GET_DRUG_EDGE(player, i), GET_DRUG_LASTFIX(player, i),
                           GET_DRUG_ADDTIME(player, i), GET_DRUG_TOLERANT(player, i), GET_DRUG_LASTWITH(player, i));
@@ -1179,7 +1180,7 @@ static bool save_char(char_data *player, DBIndex::vnum_t loadroom)
     }
   }
   if (q) {
-    strcat(buf, ");");
+    STRCAT(buf, ");");
     mysql_wrapper(mysql, buf);
   }
   if (GET_TRADITION(player) != TRAD_MUNDANE) {
@@ -1192,16 +1193,16 @@ static bool save_char(char_data *player, DBIndex::vnum_t loadroom)
     if (GET_TRADITION(player) == TRAD_ADEPT) {
       snprintf(buf, sizeof(buf), "DELETE FROM pfiles_adeptpowers WHERE idnum=%ld", GET_IDNUM(player));
       mysql_wrapper(mysql, buf);
-      strcpy(buf, "INSERT INTO pfiles_adeptpowers (idnum, powernum, rank) VALUES (");
+      STRCPY(buf, "INSERT INTO pfiles_adeptpowers (idnum, powernum, rank) VALUES (");
       for (i = 0, q = 0; i < ADEPT_NUMPOWER; i++)
         if (GET_POWER_TOTAL(player, i)) {
           if (q)
-            strcat(buf, "), (");
+            STRCAT(buf, "), (");
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld, %d, %d", GET_IDNUM(player), i, GET_POWER_TOTAL(player, i));
           q = 1;
         }
       if (q) {
-        strcat(buf, ");");
+        STRCAT(buf, ");");
         mysql_wrapper(mysql, buf);
       }
     }
@@ -1209,16 +1210,16 @@ static bool save_char(char_data *player, DBIndex::vnum_t loadroom)
     if (player->spells) {
       snprintf(buf, sizeof(buf), "DELETE FROM pfiles_spells WHERE idnum=%ld", GET_IDNUM(player));
       mysql_wrapper(mysql, buf);
-      strcpy(buf, "INSERT INTO pfiles_spells (idnum, Name, Type, SubType, Rating, Category) VALUES (");
+      STRCPY(buf, "INSERT INTO pfiles_spells (idnum, Name, Type, SubType, Rating, Category) VALUES (");
       q = 0;
       for (struct spell_data *temp = player->spells; temp; temp = temp->next) {
         if (q)
-          strcat(buf, "), (");
+          STRCAT(buf, "), (");
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld, '%s', %d, %d, %d, %d", GET_IDNUM(player), temp->name, temp->type, temp->subtype, temp->force, spells[temp->type].category);
         q = 1;
       }
       if (q) {
-        strcat(buf, ");");
+        STRCAT(buf, ");");
         mysql_wrapper(mysql, buf);
       }
     }
@@ -1226,107 +1227,107 @@ static bool save_char(char_data *player, DBIndex::vnum_t loadroom)
     if (GET_GRADE(player) > 0) {
       snprintf(buf, sizeof(buf), "DELETE FROM pfiles_metamagic WHERE idnum=%ld", GET_IDNUM(player));
       mysql_wrapper(mysql, buf);
-      strcpy(buf, "INSERT INTO pfiles_metamagic (idnum, metamagicnum, rank) VALUES (");
+      STRCPY(buf, "INSERT INTO pfiles_metamagic (idnum, metamagicnum, rank) VALUES (");
       for (i = 0, q = 0; i < META_MAX; i++)
         if (GET_METAMAGIC(player, i)) {
           if (q)
-            strcat(buf, "), (");
+            STRCAT(buf, "), (");
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld, %d, %d", GET_IDNUM(player), i, GET_METAMAGIC(player, i));
           q = 1;
        }
       if (q) {
-        strcat(buf, ");");
+        STRCAT(buf, ");");
         mysql_wrapper(mysql, buf);
       }
     }
     if (GET_SPIRIT(player) && GET_TRADITION(player) == TRAD_HERMETIC) {
       snprintf(buf, sizeof(buf), "DELETE FROM pfiles_spirits WHERE idnum=%ld", GET_IDNUM(player));
       mysql_wrapper(mysql, buf);
-      strcpy(buf, "INSERT INTO pfiles_spirits (idnum, Type, Rating, Services, SpiritID) VALUES (");
+      STRCPY(buf, "INSERT INTO pfiles_spirits (idnum, Type, Rating, Services, SpiritID) VALUES (");
       q = 0;
       for (struct spirit_data *spirit = GET_SPIRIT(player); spirit; spirit = spirit->next, q++) {
         if (q)
-          strcat(buf, "), (");
+          STRCAT(buf, "), (");
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld, %d, %d, %d, %d", GET_IDNUM(player), spirit->type, spirit->force, spirit->services, spirit->id);
         q = 1;
       }
       if (q) {
-        strcat(buf, ");");
+        STRCAT(buf, ");");
         mysql_wrapper(mysql, buf);
       }
     }
   }
   snprintf(buf, sizeof(buf), "DELETE FROM pfiles_quests WHERE idnum=%ld", GET_IDNUM(player));
   mysql_wrapper(mysql, buf);
-  strcpy(buf, "INSERT INTO pfiles_quests (idnum, number, questnum) VALUES (");
+  STRCPY(buf, "INSERT INTO pfiles_quests (idnum, number, questnum) VALUES (");
   for (i = 0, q = 0; i <= QUEST_TIMER - 1; i++) {
     if (GET_LQUEST(player ,i)) {
       if (q)
-        strcat(buf, "), (");
+        STRCAT(buf, "), (");
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld, %d, %ld", GET_IDNUM(player), i, GET_LQUEST(player, i));
       q = 1;
     }
   }
   if (q) {
-    strcat(buf, ");");
+    STRCAT(buf, ");");
     mysql_wrapper(mysql, buf);
   }
 
   snprintf(buf, sizeof(buf), "DELETE FROM pfiles_memory WHERE idnum=%ld", GET_IDNUM(player));
   mysql_wrapper(mysql, buf);
-  strcpy(buf, "INSERT INTO pfiles_memory (idnum, remembered, asname) VALUES (");
+  STRCPY(buf, "INSERT INTO pfiles_memory (idnum, remembered, asname) VALUES (");
   q = 0;
   for (struct remem *b = GET_MEMORY(player); b; b = b->next) {
     if (q)
-      strcat(buf, "), (");
+      STRCAT(buf, "), (");
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld, %ld, '%s'", GET_IDNUM(player), b->idnum, prepare_quotes(buf3, b->mem, sizeof(buf3) / sizeof(buf3[0])));
     q = 1;
   }
   if (q) {
-    strcat(buf, ");");
+    STRCAT(buf, ");");
     mysql_wrapper(mysql, buf);
   }
 
   snprintf(buf, sizeof(buf), "DELETE FROM pfiles_ignore WHERE idnum=%ld", GET_IDNUM(player));
   mysql_wrapper(mysql, buf);
-  strcpy(buf, "INSERT INTO pfiles_ignore (idnum, remembered) VALUES (");
+  STRCPY(buf, "INSERT INTO pfiles_ignore (idnum, remembered) VALUES (");
   q = 0;
   for (struct remem *b = GET_IGNORE(player); b; b = b->next) {
     if (q)
-      strcat(buf, "), (");
+      STRCAT(buf, "), (");
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld, %ld", GET_IDNUM(player), b->idnum);
     q = 1;
   }
   if (q) {
-    strcat(buf, ");");
+    STRCAT(buf, ");");
     mysql_wrapper(mysql, buf);
   }
 
   snprintf(buf, sizeof(buf), "DELETE FROM pfiles_alias WHERE idnum=%ld", GET_IDNUM(player));
   mysql_wrapper(mysql, buf);
-  strcpy(buf, "INSERT INTO pfiles_alias (idnum, command, replacement) VALUES (");
+  STRCPY(buf, "INSERT INTO pfiles_alias (idnum, command, replacement) VALUES (");
   q = 0;
   for (struct alias *a = GET_ALIASES(player); a; a = a->next) {
     if (q)
-      strcat(buf, "), (");
+      STRCAT(buf, "), (");
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld, '%s', '%s'", GET_IDNUM(player), a->command, prepare_quotes(buf3, a->replacement, sizeof(buf3) / sizeof(buf3[0])));
     q = 1;
   }
   if (q) {
-    strcat(buf, ");");
+    STRCAT(buf, ");");
     mysql_wrapper(mysql, buf);
   }
 
   snprintf(buf, sizeof(buf), "DELETE FROM pfiles_bioware WHERE idnum=%ld", GET_IDNUM(player));
   mysql_wrapper(mysql, buf);
   if (player->bioware) {
-    strcpy(buf, "INSERT INTO pfiles_bioware (idnum, Vnum, Cost, Value0, Value1, Value2, Value3, Value4, Value5, Value6,"\
+    STRCPY(buf, "INSERT INTO pfiles_bioware (idnum, Vnum, Cost, Value0, Value1, Value2, Value3, Value4, Value5, Value6,"\
                 "Value7, Value8, Value9, Value10, Value11) VALUES (");
     q = 0;
     for (struct obj_data *obj = player->bioware; obj; obj = obj->next_content) {
       if (!IS_OBJ_STAT(obj, ITEM_NORENT)) {
         if (q)
-          strcat(buf, "), (");
+          STRCAT(buf, "), (");
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld, %ld, %d", GET_IDNUM(player), GET_OBJ_VNUM(obj), GET_OBJ_COST(obj));
 
         for (int x = 0; x < NUM_VALUES; x++)
@@ -1335,7 +1336,7 @@ static bool save_char(char_data *player, DBIndex::vnum_t loadroom)
       }
     }
     if (q) {
-      strcat(buf, ");");
+      STRCAT(buf, ");");
       mysql_wrapper(mysql, buf);
     }
   }
@@ -1345,7 +1346,7 @@ static bool save_char(char_data *player, DBIndex::vnum_t loadroom)
   int level = 0, posi = 0;
   q = 0;
   if (player->cyberware) {
-    strcpy(buf, "INSERT INTO pfiles_cyberware (idnum, Vnum, Cost, Restring, Photo, Value0, Value1, Value2, Value3, Value4, Value5, Value6,"\
+    STRCPY(buf, "INSERT INTO pfiles_cyberware (idnum, Vnum, Cost, Restring, Photo, Value0, Value1, Value2, Value3, Value4, Value5, Value6,"\
            "Value7, Value8, Value9, Value10, Value11, Level, posi) VALUES ");
     bool first_pass = TRUE;
     for (struct obj_data *obj = player->cyberware; obj;) {
@@ -1378,7 +1379,7 @@ static bool save_char(char_data *player, DBIndex::vnum_t loadroom)
     }
     
     if (q) {
-      strcat(buf, ";");
+      STRCAT(buf, ";");
       mysql_wrapper(mysql, buf);
       q = 0;
     }
@@ -1393,7 +1394,7 @@ static bool save_char(char_data *player, DBIndex::vnum_t loadroom)
       break;
   while (obj && i < NUM_WEARS) {
     if (!IS_OBJ_STAT(obj, ITEM_NORENT) || GET_OBJ_VNUM(obj) == OBJ_BLANK_MAGAZINE) {
-      strcpy(buf, "INSERT INTO pfiles_worn (idnum, Vnum, Cost, Restring, Photo, Value0, Value1, Value2, Value3, Value4, Value5, Value6,"\
+      STRCPY(buf, "INSERT INTO pfiles_worn (idnum, Vnum, Cost, Restring, Photo, Value0, Value1, Value2, Value3, Value4, Value5, Value6,"\
               "Value7, Value8, Value9, Value10, Value11, Inside, Position, Timer, ExtraFlags, Attempt, Cond, posi) VALUES (");
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld, %ld, %d, '%s', '%s'", GET_IDNUM(player), GET_OBJ_VNUM(obj), GET_OBJ_COST(obj),
                           obj->restring ? prepare_quotes(buf3, obj->restring, sizeof(buf3) / sizeof(buf3[0])) : "",
@@ -1431,7 +1432,7 @@ static bool save_char(char_data *player, DBIndex::vnum_t loadroom)
   level = posi = 0;
   for (obj = player->carrying; obj;) {
     if (!IS_OBJ_STAT(obj, ITEM_NORENT)) {
-      strcpy(buf, "INSERT INTO pfiles_inv (idnum, Vnum, Cost, Restring, Photo, Value0, Value1, Value2, Value3, Value4, Value5, Value6,"\
+      STRCPY(buf, "INSERT INTO pfiles_inv (idnum, Vnum, Cost, Restring, Photo, Value0, Value1, Value2, Value3, Value4, Value5, Value6,"\
               "Value7, Value8, Value9, Value10, Value11, Inside, Timer, ExtraFlags, Attempt, Cond, posi) VALUES (");
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld, %ld, %d, '%s', '%s'", GET_IDNUM(player), GET_OBJ_VNUM(obj), GET_OBJ_COST(obj),
                           obj->restring ? prepare_quotes(buf3, obj->restring, sizeof(buf3) / sizeof(buf3[0])) : "",
@@ -1545,7 +1546,7 @@ bool PCIndex::Save()
 char_data *CreateChar(char_data *ch)
 {
   char buf[MAX_STRING_LENGTH];
-  strcpy(buf, "SELECT idnum FROM pfiles ORDER BY idnum DESC;");
+  STRCPY(buf, "SELECT idnum FROM pfiles ORDER BY idnum DESC;");
   mysql_wrapper(mysql, buf);
   MYSQL_RES *res = mysql_use_result(mysql);
   MYSQL_ROW row = mysql_fetch_row(res);
@@ -1620,7 +1621,7 @@ char_data *PCIndex::CreateChar(char_data *ch)
   init_char(ch);
   init_char_strings(ch);
 
-  strcpy(info.name, GET_CHAR_NAME(ch));
+  STRCPY(info.name, GET_CHAR_NAME(ch));
   info.id = find_open_id();
   info.level = GET_LEVEL(ch);
   info.flags = (PLR_FLAGGED(ch, PLR_NODELETE) ? NODELETE : 0);
@@ -1719,7 +1720,7 @@ bool PCIndex::load()
       shutdown();
     }
 
-    strncpy(ptr->name, temp, MAX_NAME_LENGTH);
+    strlcpy(ptr->name, temp, MAX_NAME_LENGTH);
     *(ptr->name+MAX_NAME_LENGTH-1) = '\0';
 
     ptr->active_data = NULL;

@@ -8,11 +8,12 @@
 #include "newdb.h"
 #include "security.h"
 #include "perfmon.h"
+#include "string_safety.h"
 
 #ifdef NOCRYPT
 bool run_crypto_tests() {return TRUE;}
 void hash_and_store_password(const char* password, char* array_to_write_to) {
-  strcpy(array_to_write_to, password);
+  STRCPY(array_to_write_to, password);
 }
 bool validate_password(const char* password, const char* hashed_password) {
   return strncmp(password, hashed_password) != NULL;
@@ -55,7 +56,7 @@ bool run_crypto_tests() {
   }
   
   // Begin test of the conversion algorithms.
-  strncpy(hashed_password, CRYPT(INSECURE_TEST_PASSWORD, "TestChar"), MAX_PWD_LENGTH);
+  strlcpy(hashed_password, CRYPT(INSECURE_TEST_PASSWORD, "TestChar"), MAX_PWD_LENGTH);
   
   // Validate crypt() vs password.
   if (!validate_password(INSECURE_TEST_PASSWORD, hashed_password)) {

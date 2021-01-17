@@ -21,6 +21,7 @@
 #include "handler.h"
 #include "comm.h"
 #include "newdb.h"
+#include "string_safety.h"
 
 // Externs from other files.
 extern void store_mail(long to, struct char_data *from, const char *message_pointer);
@@ -1192,7 +1193,7 @@ void pgedit_disp_menu(struct descriptor_data *d) {
 
 long get_new_pgroup_idnum() {
   char querybuf[MAX_STRING_LENGTH];
-  strcpy(querybuf, "SELECT idnum FROM playergroups ORDER BY idnum DESC;");
+  STRCPY(querybuf, "SELECT idnum FROM playergroups ORDER BY idnum DESC;");
   mysql_wrapper(mysql, querybuf);
   MYSQL_RES *res = mysql_use_result(mysql);
   MYSQL_ROW row = mysql_fetch_row(res);
@@ -1235,7 +1236,7 @@ const char *list_privs_char_can_affect(struct char_data *ch) {
   bool is_first = TRUE;
   
   static char privstring_buf[500];
-  strcpy(privstring_buf, "");
+  STRCPY(privstring_buf, "");
   
   for (int priv = 0; priv < PRIV_MAX; priv++) {
     // Nobody can hand out the leadership privilege.
@@ -1489,18 +1490,18 @@ void do_pgroup_promote_demote(struct char_data *ch, char *argument, bool promote
 
 const char *pgroup_print_privileges(Bitfield privileges) {
   static char output[500];
-  strcpy(output, "");
+  STRCPY(output, "");
   
   bool is_first = TRUE;
   for (int priv = PRIV_ADMINISTRATOR; priv < PRIV_MAX; priv++) {
     if (privileges.IsSet(priv)) {
       snprintf(ENDOF(output), sizeof(output) - strlen(output), "%s%s", is_first ? "" : ", ", pgroup_privileges[priv]);
       if (priv == PRIV_LEADER)
-        strcat(output, " (grants all other privileges)");
+        STRCAT(output, " (grants all other privileges)");
       is_first = FALSE;
     }
   }
   if (is_first)
-    strcpy(output, "(none)");
+    STRCPY(output, "(none)");
   return output;
 }

@@ -23,6 +23,7 @@
 #include "interpreter.h"
 #include "handler.h"
 #include "db.h"
+#include "string_safety.h"
 
 struct ban_list_element *ban_list = NULL;
 
@@ -50,9 +51,9 @@ void load_banned(void)
   }
   while (fscanf(fl, " %s %s %d %s ", ban_type, site_name, &date, name) == 4) {
     next_node = new ban_list_element;
-    strncpy(next_node->site, site_name, BANNED_SITE_LENGTH);
+    strlcpy(next_node->site, site_name, BANNED_SITE_LENGTH);
     next_node->site[BANNED_SITE_LENGTH] = '\0';
-    strncpy(next_node->name, name, MAX_NAME_LENGTH);
+    strlcpy(next_node->name, name, MAX_NAME_LENGTH);
     next_node->name[MAX_NAME_LENGTH] = '\0';
     next_node->date = date;
 
@@ -124,7 +125,7 @@ ACMD(do_ban)
       send_to_char("No sites are banned.\r\n", ch);
       return;
     }
-    strcpy(format, "%-25.25s  %-8.8s  %-10.10s  %-16.16s\r\n");
+    STRCPY(format, "%-25.25s  %-8.8s  %-10.10s  %-16.16s\r\n");
     snprintf(buf, sizeof(buf), format,
             "Banned Site Name",
             "Ban Type",
@@ -142,9 +143,9 @@ ACMD(do_ban)
       if (ban_node->date) {
         timestr = asctime(localtime(&(ban_node->date)));
         *(timestr + 10) = 0;
-        strcpy(site, timestr);
+        STRCPY(site, timestr);
       } else
-        strcpy(site, "Unknown");
+        STRCPY(site, "Unknown");
       snprintf(buf, sizeof(buf), format, ban_node->site, ban_types[ban_node->type], site,
               ban_node->name);
       send_to_char(buf, ch);
@@ -168,11 +169,11 @@ ACMD(do_ban)
   }
 
   ban_node = new ban_list_element;
-  strncpy(ban_node->site, site, BANNED_SITE_LENGTH);
+  strlcpy(ban_node->site, site, BANNED_SITE_LENGTH);
   for (nextchar = ban_node->site; *nextchar; nextchar++)
     *nextchar = LOWER(*nextchar);
   ban_node->site[BANNED_SITE_LENGTH] = '\0';
-  strncpy(ban_node->name, GET_CHAR_NAME(ch), MAX_NAME_LENGTH);
+  strlcpy(ban_node->name, GET_CHAR_NAME(ch), MAX_NAME_LENGTH);
   ban_node->name[MAX_NAME_LENGTH] = '\0';
   ban_node->date = time(0);
 

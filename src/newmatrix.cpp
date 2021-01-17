@@ -13,6 +13,7 @@
 #include "memory.h"
 #include "quest.h"
 #include "config.h"
+#include "string_safety.h"
 
 #define PERSONA ch->persona
 #define DECKER PERSONA->decker
@@ -784,25 +785,25 @@ ACMD(do_matrix_score)
     
     // Find the index of the command the player wants.
     if (!strncmp(argument, "health", strlen(argument))) {
-      strcpy(buf, get_plaintext_matrix_score_health(ch));
+      STRCPY(buf, get_plaintext_matrix_score_health(ch));
       send_to_icon(PERSONA, buf);
       return;
     }
     
     if (!strncmp(argument, "stats", strlen(argument))) {
-      strcpy(buf, get_plaintext_matrix_score_stats(ch, detect));
+      STRCPY(buf, get_plaintext_matrix_score_stats(ch, detect));
       send_to_icon(PERSONA, buf);
       return;
     }
     
     if (!strncmp(argument, "deck", strlen(argument))) {
-      strcpy(buf, get_plaintext_matrix_score_deck(ch));
+      STRCPY(buf, get_plaintext_matrix_score_deck(ch));
       send_to_icon(PERSONA, buf);
       return;
     }
     
     if (!strncmp(argument, "memory", strlen(argument))) {
-      strcpy(buf, get_plaintext_matrix_score_memory(ch));
+      STRCPY(buf, get_plaintext_matrix_score_memory(ch));
       send_to_icon(PERSONA, buf);
       return;
     }
@@ -815,9 +816,9 @@ ACMD(do_matrix_score)
   snprintf(buf, sizeof(buf), "You are connected to the matrix.\r\n");
   
   if (PRF_FLAGGED(ch, PRF_SCREENREADER)) {
-    strcat(buf, get_plaintext_matrix_score_health(ch));
-    strcat(buf, get_plaintext_matrix_score_stats(ch, detect));
-    strcat(buf, get_plaintext_matrix_score_deck(ch));
+    STRCAT(buf, get_plaintext_matrix_score_health(ch));
+    STRCAT(buf, get_plaintext_matrix_score_stats(ch, detect));
+    STRCAT(buf, get_plaintext_matrix_score_deck(ch));
   } else {
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "  Condition:^B%3d^n       Physical:^R%3d(%2d)^n\r\n"
             "  Detection:^r%3d^n       Hacking Pool:^g%3d/%3d (%2d)^n\r\n"
@@ -1052,15 +1053,15 @@ void show_icon_to_persona(struct matrix_icon *ch, struct matrix_icon *icon) {
   
   // Generate condition.
   if (icon->condition < 2) {
-    strcat(buf, "in terrible shape!");
+    STRCAT(buf, "in terrible shape!");
   } else if (icon->condition < 5) {
-    strcat(buf, "looking pretty beat-up.");
+    STRCAT(buf, "looking pretty beat-up.");
   } else if (icon->condition < 8) {
-    strcat(buf, "damaged.");
+    STRCAT(buf, "damaged.");
   } else if (icon->condition < 10) {
-    strcat(buf, "minorly damaged.");
+    STRCAT(buf, "minorly damaged.");
   } else {
-    strcat(buf, "intact.");
+    STRCAT(buf, "intact.");
   }
   
   send_to_icon(ch, "%s\r\n", buf);
@@ -1173,28 +1174,28 @@ ACMD(do_analyze)
         if (found[1])
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%d ", matrix[PERSONA->in_host].security);
         else
-          strcat(buf, "? ");
+          STRCAT(buf, "? ");
         if (found[2])
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld/", matrix[PERSONA->in_host].stats[ACCESS][0]);
         else
-          strcat(buf, "0/");
+          STRCAT(buf, "0/");
         if (found[3])
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld/", matrix[PERSONA->in_host].stats[CONTROL][0]);
         else
-          strcat(buf, "0/");
+          STRCAT(buf, "0/");
         if (found[4])
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld/", matrix[PERSONA->in_host].stats[INDEX][0]);
         else
-          strcat(buf, "0/");
+          STRCAT(buf, "0/");
         if (found[5])
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld/", matrix[PERSONA->in_host].stats[FILES][0]);
         else
-          strcat(buf, "0/");
+          STRCAT(buf, "0/");
         if (found[6])
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld/", matrix[PERSONA->in_host].stats[SLAVE][0]);
         else
-          strcat(buf, "0");
-        strcat(buf, "\r\n");
+          STRCAT(buf, "0");
+        STRCAT(buf, "\r\n");
       } else
         snprintf(buf, sizeof(buf), "%s-%d %ld/%ld/%ld/%ld/%ld\r\n", host_sec[matrix[PERSONA->in_host].colour],
                 matrix[PERSONA->in_host].security, matrix[PERSONA->in_host].stats[ACCESS][0],
@@ -2062,9 +2063,9 @@ ACMD(do_software)
                    "Bod:     ^g%2d^n   Masking: ^g%2d^n\r\n"
                    "Sensors: ^g%2d^n   Evasion: ^g%2d^n\r\n", bod, masking, sensor, evasion);
     }
-    strcpy(buf, "Other Software:\r\n");
+    STRCPY(buf, "Other Software:\r\n");
     if (GET_OBJ_TYPE(cyberdeck) == ITEM_CUSTOM_DECK)
-      strcpy(buf2, "Custom Components:\r\n");
+      STRCPY(buf2, "Custom Components:\r\n");
     for (struct obj_data *soft = cyberdeck->contains; soft; soft = soft->next_content)
       if (GET_OBJ_TYPE(soft) == ITEM_PROGRAM) {
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%-30s^n Rating: %2d %c\r\n", GET_OBJ_NAME(soft),
@@ -2397,35 +2398,35 @@ ACMD(do_matrix_scan)
         if (found[1])
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " %d/", ic->decker->bod);
         else
-          strcat(buf, " 0/");
+          STRCAT(buf, " 0/");
         if (found[2])
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%d/", ic->decker->evasion);
         else
-          strcat(buf, "0/");
+          STRCAT(buf, "0/");
         if (found[3])
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%d/", ic->decker->masking);
         else
-          strcat(buf, "0/");
+          STRCAT(buf, "0/");
         if (found[4])
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%d", ic->decker->sensor);
         else
-          strcat(buf, "0");
-        strcat(buf, " Response: ");
+          STRCAT(buf, "0");
+        STRCAT(buf, " Response: ");
         if (found[5])
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%d", ic->decker->response);
         else
-          strcat(buf, "0");
-        strcat(buf, " Condition: ");
+          STRCAT(buf, "0");
+        STRCAT(buf, " Condition: ");
         if (found[6])
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%d", ic->condition);
         else
-          strcat(buf, "0");
-        strcat(buf, " Privileges: None MXP: \r\n");
+          STRCAT(buf, "0");
+        STRCAT(buf, " Privileges: None MXP: \r\n");
         if (found[7])
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld", ic->decker->mxp);
         else
-          strcat(buf, "Not Found");
-        strcat(buf, "\r\n");
+          STRCAT(buf, "Not Found");
+        STRCAT(buf, "\r\n");
         send_to_icon(PERSONA, buf);
 
       } else
@@ -2915,7 +2916,7 @@ bool display_cyberdeck_issues(struct char_data *ch, struct obj_data *cyberdeck) 
     bool first = TRUE;
     snprintf(buf, sizeof(buf), "%s isn't in working condition, so it won't power on. It needs ", capitalize(GET_OBJ_NAME(cyberdeck)));
     if (!has_mpcp) {
-      strcat(buf, "an MPCP chip");
+      STRCAT(buf, "an MPCP chip");
       first = FALSE;
     }
     if (!has_active) {
@@ -2949,7 +2950,7 @@ bool display_cyberdeck_issues(struct char_data *ch, struct obj_data *cyberdeck) 
       return TRUE;
     }
     
-    strcat(buf, ".\r\n");
+    STRCAT(buf, ".\r\n");
     send_to_char(buf, ch);
   }
   

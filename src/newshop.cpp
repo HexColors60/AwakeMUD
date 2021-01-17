@@ -16,6 +16,7 @@
 #include "screen.h"
 #include "olc.h"
 #include "constants.h"
+#include "string_safety.h"
 
 extern struct time_info_data time_info;
 extern const char *pc_race_types[];
@@ -161,7 +162,7 @@ int transaction_amt(char *arg)
   if (*buf)
     if ((is_number(buf))) {
       num = atoi(buf);
-      strcpy(arg, arg + strlen(buf) + 1);
+      STRCPY(arg, arg + strlen(buf) + 1);
       return (num);
     }
   return (1);
@@ -213,7 +214,7 @@ bool shop_receive(struct char_data *ch, struct char_data *keeper, char *arg, int
                   struct shop_sell_data *sell, struct obj_data *obj, struct obj_data *cred, int price, vnum_t shop_nr)
 {
   char buf[MAX_STRING_LENGTH], buf2[MAX_STRING_LENGTH];
-  strcpy(buf, GET_CHAR_NAME(ch));
+  STRCPY(buf, GET_CHAR_NAME(ch));
   int bought = 0;
   bool print_multiples_at_end = TRUE;
   
@@ -502,7 +503,7 @@ bool shop_receive(struct char_data *ch, struct char_data *keeper, char *arg, int
           GET_NUYEN(ch) -= price;
       }
     if (bought < buynum) {
-      strcpy(buf, GET_CHAR_NAME(ch));
+      STRCPY(buf, GET_CHAR_NAME(ch));
       if (cash ? GET_NUYEN(ch) : GET_OBJ_VAL(cred, 0) < price)
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " You can only afford %d.", bought);
       else if (IS_CARRYING_N(ch) >= CAN_CARRY_N(ch))
@@ -515,7 +516,7 @@ bool shop_receive(struct char_data *ch, struct char_data *keeper, char *arg, int
   // Write the nuyen cost to buf3 and the current buy-string to arg.
   char price_buf[100];
   snprintf(price_buf, sizeof(price_buf), "%d", bought * price);
-  strcpy(arg, shop_table[shop_nr].buy);
+  STRCPY(arg, shop_table[shop_nr].buy);
   
   // Use our new replace_substring() function to swap out all %d's in arg with the nuyen string.
   replace_substring(arg, buf3, "%d", price_buf);
@@ -738,7 +739,7 @@ void shop_sell(char *arg, struct char_data *ch, struct char_data *keeper, vnum_t
     send_to_char(ch, "What item do you want to sell?\r\n");
     return;
   }
-  strcpy(buf, GET_CHAR_NAME(ch));
+  STRCPY(buf, GET_CHAR_NAME(ch));
   if (shop_table[shop_nr].flags.IsSet(SHOP_DOCTOR))
   {
     if (!(obj = get_obj_in_list_vis(ch, arg, ch->cyberware))
@@ -813,7 +814,7 @@ void shop_sell(char *arg, struct char_data *ch, struct char_data *keeper, vnum_t
   // Write the nuyen cost to buf3 and the current buy-string to arg.
   char price_buf[100];
   snprintf(price_buf, sizeof(price_buf), "%d", sellprice);
-  strcpy(arg, shop_table[shop_nr].sell);
+  STRCPY(arg, shop_table[shop_nr].sell);
   
   // Use our new replace_substring() function to swap out all %d's in arg with the nuyen string.
   replace_substring(arg, buf3, "%d", price_buf);
@@ -896,16 +897,16 @@ void shop_list(char *arg, struct char_data *ch, struct char_data *keeper, vnum_t
             snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), ". It will take %d day%s to obtain", (int) GET_OBJ_AVAILDAY(obj), GET_OBJ_AVAILDAY(obj) > 1 ? "s" : "");
           }
         } else if (sell->stock <= 0) {
-          strcat(buf, ". It is currently out of stock");
+          STRCAT(buf, ". It is currently out of stock");
         } else {
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), ". Only %d %s in stock", sell->stock, sell->stock > 1 ? "are" : "is");
         }
       }
       
       if (IS_OBJ_STAT(obj, ITEM_NERPS))
-        strcat(buf, ". OOC note: It has no coded effect");
+        STRCAT(buf, ". OOC note: It has no coded effect");
       
-      strcat(buf, ".\r\n");
+      STRCAT(buf, ".\r\n");
       
       // Clean up so we don't leak the object.
       extract_obj(obj);
@@ -916,7 +917,7 @@ void shop_list(char *arg, struct char_data *ch, struct char_data *keeper, vnum_t
   
   
   if (shop_table[shop_nr].flags.IsSet(SHOP_DOCTOR)) {
-    strcpy(buf, " ##   Available   Item                                Rating Ess/Index    Price\r\n"
+    STRCPY(buf, " ##   Available   Item                                Rating Ess/Index    Price\r\n"
                 "-------------------------------------------------------------------------------\r\n");
     
     for (struct shop_sell_data *sell = shop_table[shop_nr].selling; sell; sell = sell->next, i++) {
@@ -941,7 +942,7 @@ void shop_list(char *arg, struct char_data *ch, struct char_data *keeper, vnum_t
       }
       if (GET_OBJ_VAL(obj, 1) > 0)
         snprintf(buf2, sizeof(buf2), "%d", GET_OBJ_VAL(obj, 1));
-      else strcpy(buf2, "-");
+      else STRCPY(buf2, "-");
       
       if (IS_OBJ_STAT(obj, ITEM_NERPS)) {
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "^Y(N)^n %-29s^n %-6s%2s   %0.2f%c  %9d\r\n", GET_OBJ_NAME(obj),
@@ -956,7 +957,7 @@ void shop_list(char *arg, struct char_data *ch, struct char_data *keeper, vnum_t
     }
   } else
   {
-    strcpy(buf, " ##   Available   Item                                              Price\r\n"
+    STRCPY(buf, " ##   Available   Item                                              Price\r\n"
             "------------------------------------------------------------------------------\r\n");
     for (struct shop_sell_data *sell = shop_table[shop_nr].selling; sell; sell = sell->next, i++) {
       obj = read_object(sell->vnum, VIRTUAL);
@@ -1022,9 +1023,9 @@ void shop_value(char *arg, struct char_data *ch, struct char_data *keeper, vnum_
       return;
     }
   }
-  strcpy(buf, GET_CHAR_NAME(ch));
+  STRCPY(buf, GET_CHAR_NAME(ch));
   if (!shop_table[shop_nr].buytypes.IsSet(GET_OBJ_TYPE(obj)) || IS_OBJ_STAT(obj, ITEM_NOSELL))
-    strcat(buf, " I wouldn't buy that off of you.");
+    STRCAT(buf, " I wouldn't buy that off of you.");
   else
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " I would be able to give you around %d nuyen for that.", sell_price(obj, shop_nr));
 
@@ -1101,63 +1102,63 @@ void shop_info(char *arg, struct char_data *ch, struct char_data *keeper, vnum_t
   case ITEM_WEAPON:
     if (IS_GUN(GET_OBJ_VAL(obj, 3))) {
       if (GET_OBJ_VAL(obj, 0) < 3)
-        strcat(buf, " a weak");
+        STRCAT(buf, " a weak");
       else if (GET_OBJ_VAL(obj, 0) < 6)
-        strcat(buf, " a low powered");
+        STRCAT(buf, " a low powered");
       else if (GET_OBJ_VAL(obj, 0) < 10)
-        strcat(buf, " a moderately powered");
+        STRCAT(buf, " a moderately powered");
       else if (GET_OBJ_VAL(obj, 0) < 12)
-        strcat(buf, " a strong");
+        STRCAT(buf, " a strong");
       else
-        strcat(buf, " a high powered");
+        STRCAT(buf, " a high powered");
 
       if (IS_SET(GET_OBJ_VAL(obj, 10), 1 << MODE_SS))
-        strcat(buf, " single shot");
+        STRCAT(buf, " single shot");
       else if (IS_SET(GET_OBJ_VAL(obj, 10), 1 << MODE_FA))
-        strcat(buf, " fully automatic");
+        STRCAT(buf, " fully automatic");
       else if (IS_SET(GET_OBJ_VAL(obj, 10), 1 << MODE_BF))
-        strcat(buf, " burst-fire");
+        STRCAT(buf, " burst-fire");
       else if (IS_SET(GET_OBJ_VAL(obj, 10), 1 << MODE_SA))
-        strcat(buf, " semi-automatic");
+        STRCAT(buf, " semi-automatic");
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " %s", weapon_type[GET_OBJ_VAL(obj, 3)]);
       if (IS_OBJ_STAT(obj, ITEM_TWOHANDS))
-        strcat(buf, " and requires two hands to wield correctly");
+        STRCAT(buf, " and requires two hands to wield correctly");
       if (GET_WEAPON_INTEGRAL_RECOIL_COMP(obj))
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), ". It has %d round%s of built-in recoil compensation",
                 GET_WEAPON_INTEGRAL_RECOIL_COMP(obj),
                 GET_WEAPON_INTEGRAL_RECOIL_COMP(obj) > 1 ? "s" : "");
       if (GET_OBJ_VAL(obj, 7) > 0 || GET_OBJ_VAL(obj, 8) > 0 || GET_OBJ_VAL(obj, 9) > 0)
-        strcat(buf, ". It comes standard with ");
+        STRCAT(buf, ". It comes standard with ");
         
       int real_obj;
       if ((real_obj = real_object(GET_OBJ_VAL(obj, 7))) > 0) {
-        strcat(buf, obj_proto[real_obj].text.name);
+        STRCAT(buf, obj_proto[real_obj].text.name);
         if ((GET_OBJ_VAL(obj, 8) > 0 && GET_OBJ_VAL(obj, 9) < 1) || (GET_OBJ_VAL(obj, 8) < 1 && GET_OBJ_VAL(obj, 9) > 0))
-          strcat(buf, " and ");
+          STRCAT(buf, " and ");
         if (GET_OBJ_VAL(obj, 8) > 0 && GET_OBJ_VAL(obj, 9) > 0)
-          strcat(buf, ", ");
+          STRCAT(buf, ", ");
       }
       if ((real_obj = real_object(GET_OBJ_VAL(obj, 8))) > 0) {
-        strcat(buf, obj_proto[real_obj].text.name);
+        STRCAT(buf, obj_proto[real_obj].text.name);
         if (GET_OBJ_VAL(obj, 9) > 0)
-          strcat(buf, " and ");
+          STRCAT(buf, " and ");
       }
       if ((real_obj = real_object(GET_OBJ_VAL(obj, 7))) > 9) {
-        strcat(buf, obj_proto[real_obj].text.name);
+        STRCAT(buf, obj_proto[real_obj].text.name);
       }
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), ". It can hold a maximum of %d rounds.", GET_OBJ_VAL(obj, 5));
     } else {
       // Map damage value to phrase.
       if (GET_WEAPON_DAMAGE_CODE(obj) == LIGHT) {
-        strcat(buf, " a lightly-damaging");
+        STRCAT(buf, " a lightly-damaging");
       } else if (GET_WEAPON_DAMAGE_CODE(obj) == MODERATE) {
-        strcat(buf, " a moderately-damaging");
+        STRCAT(buf, " a moderately-damaging");
       } else if (GET_WEAPON_DAMAGE_CODE(obj) == SERIOUS) {
-        strcat(buf, " a strong");
+        STRCAT(buf, " a strong");
       } else if (GET_WEAPON_DAMAGE_CODE(obj) == DEADLY) {
-        strcat(buf, " a deadly");
+        STRCAT(buf, " a deadly");
       } else {
-        strcat(buf, " an indeterminate-strength");
+        STRCAT(buf, " an indeterminate-strength");
         snprintf(buf1, sizeof(buf1), "SYSERR: Unable to map damage value %d for weapon '%s' (%ld) to a damage phrase.",
                 GET_WEAPON_DAMAGE_CODE(obj), GET_OBJ_NAME(obj), GET_OBJ_VNUM(obj));
         mudlog(buf1, NULL, LOG_SYSLOG, TRUE);
@@ -1166,9 +1167,9 @@ void shop_info(char *arg, struct char_data *ch, struct char_data *keeper, vnum_t
       
       // Two-handed weapon?
       if (IS_OBJ_STAT(obj, ITEM_TWOHANDS))
-        strcat(buf, " that requires two hands to wield correctly.");
+        STRCAT(buf, " that requires two hands to wield correctly.");
       else
-        strcat(buf, ".");
+        STRCAT(buf, ".");
       
       // Reach?
       if (GET_WEAPON_REACH(obj)) {
@@ -1179,15 +1180,15 @@ void shop_info(char *arg, struct char_data *ch, struct char_data *keeper, vnum_t
       // Map strength bonus to phrase.
       if (GET_WEAPON_STR_BONUS(obj) != 0) {
         if (GET_WEAPON_STR_BONUS(obj) == 1) {
-          strcat(buf, " It is somewhat well-constructed and will let you hit a little harder in combat.");
+          STRCAT(buf, " It is somewhat well-constructed and will let you hit a little harder in combat.");
         } else if (GET_WEAPON_STR_BONUS(obj) == 2) {
-          strcat(buf, " It is well-constructed, letting you land strong hits.");
+          STRCAT(buf, " It is well-constructed, letting you land strong hits.");
         } else if (GET_WEAPON_STR_BONUS(obj) == 3) {
-          strcat(buf, " It is extremely well-constructed, letting you hit with great strength.");
+          STRCAT(buf, " It is extremely well-constructed, letting you hit with great strength.");
         } else if (GET_WEAPON_STR_BONUS(obj) == 4) {
-          strcat(buf, " It is masterfully constructed, letting you hit as hard as possible.");
+          STRCAT(buf, " It is masterfully constructed, letting you hit as hard as possible.");
         } else {
-          strcat(buf, " It has an indeterminate strength modifier.");
+          STRCAT(buf, " It has an indeterminate strength modifier.");
           snprintf(buf1, sizeof(buf1), "SYSERR: Unable to map strength modifier %d for weapon '%s' (%ld) to a feature phrase.",
                   GET_WEAPON_STR_BONUS(obj), GET_OBJ_NAME(obj), GET_OBJ_VNUM(obj));
           mudlog(buf1, NULL, LOG_SYSLOG, TRUE);
@@ -1199,29 +1200,29 @@ void shop_info(char *arg, struct char_data *ch, struct char_data *keeper, vnum_t
     num = (GET_OBJ_VAL(obj, 5) > 20 ? (int)(GET_OBJ_VAL(obj, 5) / 100) : GET_OBJ_VAL(obj, 5)) +
           (GET_OBJ_VAL(obj, 6) > 20 ? (int)(GET_OBJ_VAL(obj, 6) / 100) : GET_OBJ_VAL(obj, 6));
     if (num < 1)
-      strcat(buf, " a piece of clothing");
+      STRCAT(buf, " a piece of clothing");
     else if (num < 4)
-      strcat(buf, " a lightly armored piece of clothing");
+      STRCAT(buf, " a lightly armored piece of clothing");
     else if (num < 7)
-      strcat(buf, " a piece of light armor");
+      STRCAT(buf, " a piece of light armor");
     else if (num < 10)
-      strcat(buf, " a moderately rated piece of armor");
+      STRCAT(buf, " a moderately rated piece of armor");
     else
-      strcat(buf, " a piece of heavy armor");
+      STRCAT(buf, " a piece of heavy armor");
     if (GET_OBJ_VAL(obj, 1) > 5)
-      strcat(buf, " designed for carrying ammunition");
+      STRCAT(buf, " designed for carrying ammunition");
     else if (GET_OBJ_VAL(obj, 4) > 3 && GET_OBJ_VAL(obj, 4) < 6)
-      strcat(buf, " that can carry a bit of gear");
+      STRCAT(buf, " that can carry a bit of gear");
     else if (GET_OBJ_VAL(obj, 4) >= 6)
-      strcat(buf, " that can carry a lot of gear");
+      STRCAT(buf, " that can carry a lot of gear");
     if (GET_OBJ_VAL(obj, 7) < -2)
-      strcat(buf, ". It is also very bulky.");
+      STRCAT(buf, ". It is also very bulky.");
     else if (GET_OBJ_VAL(obj, 7) < 1)
-      strcat(buf, ". It is easier to see under clothing.");
+      STRCAT(buf, ". It is easier to see under clothing.");
     else if (GET_OBJ_VAL(obj, 7) < 4)
-      strcat(buf, ". It is quite concealable.");
+      STRCAT(buf, ". It is quite concealable.");
     else
-      strcat(buf, ". It's almost invisible under clothing.");
+      STRCAT(buf, ". It's almost invisible under clothing.");
     break;
   case ITEM_PROGRAM:
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " a rating %d %s program, that is %dMp in size.", GET_OBJ_VAL(obj, 1),
@@ -1229,103 +1230,103 @@ void shop_info(char *arg, struct char_data *ch, struct char_data *keeper, vnum_t
     break;
   case ITEM_CYBERDECK:
     if (GET_OBJ_VAL(obj, 0) < 4)
-      strcat(buf, " a beginners cyberdeck");
+      STRCAT(buf, " a beginners cyberdeck");
     else if (GET_OBJ_VAL(obj, 0) < 9)
-      strcat(buf, " a cyberdeck of moderate ability");
+      STRCAT(buf, " a cyberdeck of moderate ability");
     else if (GET_OBJ_VAL(obj, 0) < 12)
-      strcat(buf, " a top of the range cyberdeck");
+      STRCAT(buf, " a top of the range cyberdeck");
     else
-      strcat(buf, " one of the best cyberdecks you'll ever see");
+      STRCAT(buf, " one of the best cyberdecks you'll ever see");
     if (GET_OBJ_VAL(obj, 2) + GET_OBJ_VAL(obj, 3) < 600)
-      strcat(buf, " with a modest amount of memory.");
+      STRCAT(buf, " with a modest amount of memory.");
     else if (GET_OBJ_VAL(obj, 2) + GET_OBJ_VAL(obj, 3) < 1400)
-      strcat(buf, " containing a satisfactory amount of memory.");
+      STRCAT(buf, " containing a satisfactory amount of memory.");
     else if (GET_OBJ_VAL(obj, 2) + GET_OBJ_VAL(obj, 3) < 3000)
-      strcat(buf, " featuring a fair amount of memory.");
+      STRCAT(buf, " featuring a fair amount of memory.");
     else if (GET_OBJ_VAL(obj, 2) + GET_OBJ_VAL(obj, 3) < 5000)
-      strcat(buf, " with oodles of memory.");
+      STRCAT(buf, " with oodles of memory.");
     else
-      strcat(buf, " with more memory than you could shake a datajack at.");
+      STRCAT(buf, " with more memory than you could shake a datajack at.");
     if (GET_OBJ_VAL(obj, 1) < 2)
-      strcat(buf, " You better hope you don't run into anything nasty while using it");
+      STRCAT(buf, " You better hope you don't run into anything nasty while using it");
     else if (GET_OBJ_VAL(obj, 1) < 5)
-      strcat(buf, " It offers adequate protection from feedback");
+      STRCAT(buf, " It offers adequate protection from feedback");
     else if (GET_OBJ_VAL(obj, 1) < 9)
-      strcat(buf, " Nothing will phase you");
+      STRCAT(buf, " Nothing will phase you");
     else
-      strcat(buf, " It could protect you from anything");
+      STRCAT(buf, " It could protect you from anything");
     if (GET_OBJ_VAL(obj, 4) < 100)
-      strcat(buf, " but you're out of luck if you want to transfer anything.");
+      STRCAT(buf, " but you're out of luck if you want to transfer anything.");
     else if (GET_OBJ_VAL(obj, 4) < 200)
-      strcat(buf, " and it transfers slowly, but will get the job done.");
+      STRCAT(buf, " and it transfers slowly, but will get the job done.");
     else if (GET_OBJ_VAL(obj, 4) < 300)
-      strcat(buf, " and on the plus side it's IO is excellent.");
+      STRCAT(buf, " and on the plus side it's IO is excellent.");
     else if (GET_OBJ_VAL(obj, 4) < 500)
-      strcat(buf, " also the IO is second to none.");
+      STRCAT(buf, " also the IO is second to none.");
     else
-      strcat(buf, " and it can upload faster than light.");
+      STRCAT(buf, " and it can upload faster than light.");
     break;
   case ITEM_FOOD:
     if (GET_OBJ_VAL(obj, 0) < 2)
-      strcat(buf, " a small");
+      STRCAT(buf, " a small");
     else if (GET_OBJ_VAL(obj, 0) < 5)
-      strcat(buf, " a average");
+      STRCAT(buf, " a average");
     else if (GET_OBJ_VAL(obj, 0) < 10)
-      strcat(buf, " a large");
+      STRCAT(buf, " a large");
     else
-      strcat(buf, " a huge");
-    strcat(buf, " portion of food.");
+      STRCAT(buf, " a huge");
+    STRCAT(buf, " portion of food.");
     break;
   case ITEM_DOCWAGON:
-    strcat(buf, " a DocWagon contract, it will call them out when your vital signs drop.");
+    STRCAT(buf, " a DocWagon contract, it will call them out when your vital signs drop.");
     break;
   case ITEM_CONTAINER:
     if (GET_OBJ_VAL(obj, 0) < 5)
-      strcat(buf, " tiny");
+      STRCAT(buf, " tiny");
     else if (GET_OBJ_VAL(obj, 0) < 15)
-      strcat(buf, " small");
+      STRCAT(buf, " small");
     else if (GET_OBJ_VAL(obj, 0) < 30)
-      strcat(buf, " large");
+      STRCAT(buf, " large");
     else if (GET_OBJ_VAL(obj, 0) < 60)
-      strcat(buf, " huge");
+      STRCAT(buf, " huge");
     else
-      strcat(buf, " gigantic");
+      STRCAT(buf, " gigantic");
       
     if (obj->obj_flags.wear_flags.AreAnySet(ITEM_WEAR_BACK, ITEM_WEAR_ABOUT, ENDBIT))
-      strcat(buf, " backpack.");
+      STRCAT(buf, " backpack.");
     else
-      strcat(buf, " container.");
+      STRCAT(buf, " container.");
     break;
   case ITEM_DECK_ACCESSORY:
     if (GET_OBJ_VAL(obj, 0) == TYPE_COOKER) {
-      strcat(buf, " a");
+      STRCAT(buf, " a");
       if (GET_DECK_ACCESSORY_COOKER_RATING(obj) <= 2)
-        strcat(buf, " sluggish");
+        STRCAT(buf, " sluggish");
       else if (GET_DECK_ACCESSORY_COOKER_RATING(obj) <= 4)
-        strcat(buf, " average");
+        STRCAT(buf, " average");
       else if (GET_DECK_ACCESSORY_COOKER_RATING(obj) <= 6)
-        strcat(buf, " quick");
+        STRCAT(buf, " quick");
       else if (GET_DECK_ACCESSORY_COOKER_RATING(obj) <= 8)
-        strcat(buf, " speedy");
+        STRCAT(buf, " speedy");
       else
-        strcat(buf, " lightning fast");
-      strcat(buf, " optical chip encoder.");
+        STRCAT(buf, " lightning fast");
+      STRCAT(buf, " optical chip encoder.");
     } else if (GET_OBJ_VAL(obj, 0) == TYPE_COMPUTER) {
-      strcat(buf, " a personal computer. It has ");
+      STRCAT(buf, " a personal computer. It has ");
       if (GET_OBJ_VAL(obj, 1) < 150)
-        strcat(buf, " a small memory capacity.");
+        STRCAT(buf, " a small memory capacity.");
       else if (GET_OBJ_VAL(obj, 1) < 500)
-        strcat(buf, " a moderate amount of memory.");
+        STRCAT(buf, " a moderate amount of memory.");
       else if (GET_OBJ_VAL(obj, 1) < 1500)
-        strcat(buf, " a large amount of memory.");
+        STRCAT(buf, " a large amount of memory.");
       else if (GET_OBJ_VAL(obj, 1) < 3000)
-        strcat(buf, " more than enough memory for most people.");
+        STRCAT(buf, " more than enough memory for most people.");
       else
-        strcat(buf, " an almost unimaginable amount of memory.");
+        STRCAT(buf, " an almost unimaginable amount of memory.");
     } else if (GET_OBJ_VAL(obj, 0) == TYPE_PARTS)
-      strcat(buf, " used in the construction of cyberdeck components.");
+      STRCAT(buf, " used in the construction of cyberdeck components.");
     else if (GET_OBJ_VAL(obj, 0) == TYPE_UPGRADE && GET_OBJ_VAL(obj, 1) == 3)
-      strcat(buf, " used to allow other people to surf along side you.");
+      STRCAT(buf, " used to allow other people to surf along side you.");
     break;
   case ITEM_SPELL_FORMULA:
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " a rating %d spell formula, describing %s. It is designed for use by a %s mage.", GET_OBJ_VAL(obj, 0),
@@ -1348,85 +1349,85 @@ void shop_info(char *arg, struct char_data *ch, struct char_data *keeper, vnum_t
     if (GET_OBJ_VAL(obj, 0) == TYPE_LIBRARY_CONJURE || GET_OBJ_VAL(obj, 0) == TYPE_LIBRARY_SPELL) {
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "  is a rating %d ", GET_OBJ_VAL(obj, 1));
       if (GET_OBJ_VAL(obj, 0) == TYPE_LIBRARY_CONJURE)
-        strcat(buf, "conjuring");
+        STRCAT(buf, "conjuring");
       else if (GET_OBJ_VAL(obj, 0) == TYPE_LIBRARY_SPELL)
-        strcat(buf, "sorcery");
-      strcat(buf, " library.");
+        STRCAT(buf, "sorcery");
+      STRCAT(buf, " library.");
     }
     break;
   case ITEM_MOD:
-    strcat(buf, " a vehicle modification for the ");
+    STRCAT(buf, " a vehicle modification for the ");
     if (GET_OBJ_VAL(obj, 6) >= MOD_INTAKE_FRONT && GET_OBJ_VAL(obj, 6) <= MOD_INTAKE_REAR)
-      strcat(buf, "intake");
+      STRCAT(buf, "intake");
     else if (GET_OBJ_VAL(obj, 6) >= MOD_BODY_FRONT && GET_OBJ_VAL(obj, 6) <= MOD_BODY_WINDOWS)
-      strcat(buf, "body");
+      STRCAT(buf, "body");
     else if (GET_OBJ_VAL(obj, 6) >= MOD_COMPUTER1 && GET_OBJ_VAL(obj, 6) <= MOD_COMPUTER3)
-      strcat(buf, "computer");
-    else strcat(buf, mod_name[GET_OBJ_VAL(obj, 6)]);
-    strcat(buf, ". It is for ");
+      STRCAT(buf, "computer");
+    else STRCAT(buf, mod_name[GET_OBJ_VAL(obj, 6)]);
+    STRCAT(buf, ". It is for ");
     for (int q = 1; q <= ENGINE_DIESEL; q++)
       if (IS_SET(GET_OBJ_VAL(obj, 5), 1 << q))
         num++;
     if (num) {
       if (IS_SET(GET_OBJ_VAL(obj, 5), 1 << ENGINE_ELECTRIC)) {
-        strcat(buf, "electric");
+        STRCAT(buf, "electric");
         num2++;
         num--;
       }
       if (IS_SET(GET_OBJ_VAL(obj, 5), 1 << ENGINE_FUELCELL)) {
         if (num2) {
           if (num > 1)
-            strcat(buf, ", ");
-          else strcat(buf, " and ");
+            STRCAT(buf, ", ");
+          else STRCAT(buf, " and ");
         }
-        strcat(buf, "fuel cell");
+        STRCAT(buf, "fuel cell");
         num2++;
         num--;
       }
       if (IS_SET(GET_OBJ_VAL(obj, 5), 1 << ENGINE_GASOLINE)) {
         if (num2) {
           if (num > 1)
-            strcat(buf, ", ");
-          else strcat(buf, " and ");
+            STRCAT(buf, ", ");
+          else STRCAT(buf, " and ");
         }
-        strcat(buf, "gasoline");
+        STRCAT(buf, "gasoline");
         num2++;
         num--;
       }
       if (IS_SET(GET_OBJ_VAL(obj, 5), 1 << ENGINE_METHANE)) {
         if (num2) {
           if (num > 1)
-            strcat(buf, ", ");
-          else strcat(buf, " and ");
+            STRCAT(buf, ", ");
+          else STRCAT(buf, " and ");
         }
-        strcat(buf, "methane");
+        STRCAT(buf, "methane");
         num2++;
         num--;
       }
       if (IS_SET(GET_OBJ_VAL(obj, 5), 1 << ENGINE_DIESEL)) {
         if (num2) {
           if (num > 1)
-            strcat(buf, ", ");
-          else strcat(buf, " and ");
+            STRCAT(buf, ", ");
+          else STRCAT(buf, " and ");
         }
-        strcat(buf, "diesel");
+        STRCAT(buf, "diesel");
         num2++;
         num--;
       }
-    } else strcat(buf, "all");
-    strcat(buf, " engines.");
+    } else STRCAT(buf, "all");
+    STRCAT(buf, " engines.");
     break;
   default:
     snprintf(buf, sizeof(buf), "%s I don't know anything about that.", GET_CHAR_NAME(ch));
   }
-  strcat(buf, " It weighs about ");
+  STRCAT(buf, " It weighs about ");
   if (GET_OBJ_WEIGHT(obj) < 1) {
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%d grams", (int)(GET_OBJ_WEIGHT(obj) * 1000));
   } else snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%.0f kilogram%s", GET_OBJ_WEIGHT(obj), (GET_OBJ_WEIGHT(obj) >= 2 ? "s" : ""));
   snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " and I couldn't let it go for less than %d nuyen.", buy_price(obj, shop_nr));
   
   if (IS_OBJ_STAT(obj, ITEM_NERPS)) {
-    strcat(buf, " ^Y(OOC: It has no special coded effects.)^n");
+    STRCAT(buf, " ^Y(OOC: It has no special coded effects.)^n");
   }
   
   do_say(keeper, buf, cmd_say, SCMD_SAYTO);
@@ -1452,11 +1453,11 @@ void shop_check(char *arg, struct char_data *ch, struct char_data *keeper, vnum_
       if (real_obj >= 0)
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " %d) %-30s (%d) - ", i, GET_OBJ_NAME(&obj_proto[real_obj]), order->number);
       else
-        strncat(buf, " ERROR\r\n", sizeof(buf) - strlen(buf) - 1);
+        STRCAT(buf, " ERROR\r\n");
       if (totaltime < 0)
-        strncat(buf, " AVAILABLE\r\n", sizeof(buf) - strlen(buf) - 1);
+        STRCAT(buf, " AVAILABLE\r\n");
       else if (totaltime < 1 && (int)(24 * totaltime) == 0)
-        strncat(buf, " less than one hour", sizeof(buf) - strlen(buf) - 1);
+        STRCAT(buf, " less than one hour");
       else
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " %d %s\r\n", totaltime < 1 ? (int)(24 * totaltime) : (int)totaltime,
                 totaltime < 1 ? "hours" : (totaltime == 1 ? "day" : "days"));
@@ -1512,7 +1513,7 @@ void shop_cancel(char *arg, struct char_data *ch, struct char_data *keeper, vnum
   if (!is_ok_char(keeper, ch, shop_nr))
     return;
   int number;
-  strcpy(buf, GET_CHAR_NAME(ch));
+  STRCPY(buf, GET_CHAR_NAME(ch));
   if (!(number = atoi(arg)))
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " What order do you want to cancel?");
   else
@@ -1539,30 +1540,30 @@ void shop_cancel(char *arg, struct char_data *ch, struct char_data *keeper, vnum
 void shop_hours(struct char_data *ch, vnum_t shop_nr)
 {
 #ifdef USE_SHOP_OPEN_CLOSE_TIMES
-  strcpy(buf, "This shop is ");
+  STRCPY(buf, "This shop is ");
   if (!shop_table[shop_nr].open && shop_table[shop_nr].close == 24)
-    strcat(buf, "always open");
+    STRCAT(buf, "always open");
   else {
-    strcat(buf, "open from ");
+    STRCAT(buf, "open from ");
     if (shop_table[shop_nr].open < 12)
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%dam", shop_table[shop_nr].open);
     else if (shop_table[shop_nr].open == 12)
-      strcat(buf, "noon");
+      STRCAT(buf, "noon");
     else if (shop_table[shop_nr].open == 24)
-      strcat(buf, "midnight");
+      STRCAT(buf, "midnight");
     else
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%dpm", shop_table[shop_nr].open - 12);
-    strcat(buf, " until ");
+    STRCAT(buf, " until ");
     if (shop_table[shop_nr].close < 12)
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%dam", shop_table[shop_nr].close);
     else if (shop_table[shop_nr].close == 12)
-      strcat(buf, "noon");
+      STRCAT(buf, "noon");
     else if (shop_table[shop_nr].close == 24)
-      strcat(buf, "midnight");
+      STRCAT(buf, "midnight");
     else
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%dpm", shop_table[shop_nr].close - 12);
   }
-  strcat(buf, ".\r\n");
+  STRCAT(buf, ".\r\n");
   send_to_char(buf, ch);
 #else
   send_to_char("The shop-hours system is disabled, so shops are always open.\r\n", ch);
@@ -1666,7 +1667,7 @@ void list_detailed_shop(struct char_data *ch, vnum_t shop_nr)
   snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "Flags:      %s\r\n", buf2);
   shop_table[shop_nr].buytypes.PrintBits(buf2, MAX_STRING_LENGTH, item_types, NUM_ITEMS);
   snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "Buytypes:   %s\r\n", buf2);
-  strcat(buf, "Selling: \r\n");
+  STRCAT(buf, "Selling: \r\n");
   for (struct shop_sell_data *selling = shop_table[shop_nr].selling; selling; selling = selling->next) {
     int real_obj = real_object(selling->vnum);
     if (real_obj)
@@ -1809,7 +1810,7 @@ void shedit_disp_selling_menu(struct descriptor_data *d)
               sell->vnum, selling_type[sell->type]);
     if (sell->type == SELL_STOCK)
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " Stock: ^c%d^n", sell->stock);
-    strcat(buf, "\r\n");
+    STRCAT(buf, "\r\n");
     send_to_char(buf, CH);
   }
   send_to_char("a) Add Entry\r\nd) Delete Entry\r\nEnter Choice (0 to quit)", CH);
@@ -2280,7 +2281,7 @@ bool can_sell_object(struct obj_data *obj, struct char_data *keeper, int shop_nr
   // Don't allow sale of forbidden vnums.
   if (GET_OBJ_VNUM(obj) == OBJ_OLD_BLANK_MAGAZINE_FROM_CLASSIC
       || GET_OBJ_VNUM(obj) == OBJ_BLANK_MAGAZINE) {
-    strncat(buf2, "matching a forbidden vnum.", sizeof(buf2) - strlen(buf2) - 1);
+    STRCAT(buf2, "matching a forbidden vnum.");
     mudlog(buf2, keeper, LOG_SYSLOG, TRUE);
     extract_obj(obj);
     return FALSE;
@@ -2308,7 +2309,7 @@ bool can_sell_object(struct obj_data *obj, struct char_data *keeper, int shop_nr
     /*
     case ITEM_FIREWEAPON:
     case ITEM_MISSILE:
-      strncat(buf, "being a fireweapon or fireweapon ammo.", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "being a fireweapon or fireweapon ammo.");
       mudlog(buf2, keeper, LOG_SYSLOG, TRUE);
       extract_obj(obj);
       return FALSE;

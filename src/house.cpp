@@ -24,6 +24,7 @@
 #include "constants.h"
 #include "file.h"
 #include "vtable.h"
+#include "string_safety.h"
 
 extern char *cleanup(char *dest, const char *src);
 extern void ASSIGNMOB(long mob, SPECIAL(fname));
@@ -396,16 +397,16 @@ void display_room_list_to_character(struct char_data *ch, struct landlord *lord)
                 room_record->name,
                 lifestyle[room_record->mode].name,
                 lord->basecost * lifestyle[room_record->mode].cost);
-        strcat(buf, buf2);
+        STRCAT(buf, buf2);
         send_to_char(buf, ch);
         on_first_entry_in_column = TRUE;
       }
     }
   }
   if (!on_first_entry_in_column)
-    strcat(buf, "\r\n\n");
+    STRCAT(buf, "\r\n\n");
   else
-    strcpy(buf, "\r\n");
+    STRCPY(buf, "\r\n");
   send_to_char(buf, ch);
 }
 
@@ -603,7 +604,7 @@ SPECIAL(landlord_spec)
       do_say(recep, "That room is currently available for lease.", 0, 0);
     else {
       if (room_record->date - time(0) < 0)
-        strcpy(buf2, "Your rent has expired on that apartment.");
+        STRCPY(buf2, "Your rent has expired on that apartment.");
       else snprintf(buf2, sizeof(buf2), "You are paid for another %d days.", (int)((room_record->date - time(0)) / 86400));
       do_say(recep, buf2, 0, 0);
     }
@@ -627,15 +628,15 @@ void House_boot(void)
     log("House control file does not exist.");
     return;
   }
-  if (!get_line(fl, line) || sscanf(line, "%d", &num_land) != 1) {
+  if (!get_line(fl, line, sizeof(line)) || sscanf(line, "%d", &num_land) != 1) {
     log("Error at beginning of house control file.");
     return;
   }
 
   for (int i = 0; i < num_land; i++) {
-    get_line(fl, line);
+    get_line(fl, line, sizeof(line));
     if (sscanf(line, "%ld %s %d %d", &landlord_vnum, name, t, t + 1) != 4) {
-      fprintf(stderr, "Format error in landlord #%d.\r\n", i);
+      fprintf(stderr, "Format error in landlord #%d. Got line: '%s'\r\n", i, line);
       return;
     }
     if (real_mobile(landlord_vnum) < 0) {
@@ -650,7 +651,7 @@ void House_boot(void)
     templ->num_room = t[1];
     struct house_control_rec *last = NULL, *first = NULL;
     for (int x = 0; x < templ->num_room; x++) {
-      get_line(fl, line);
+      get_line(fl, line, sizeof(line));
       if (sscanf(line, "%ld %ld %d %d %s %ld %d %ld", &house_vnum, &key_vnum, t, t + 1, name,
                  &owner, t + 2, &paid) != 8) {
         fprintf(stderr, "Format error in landlord #%d room #%d.\r\n", i, x);
@@ -731,8 +732,8 @@ void hcontrol_list_houses(struct char_data *ch)
 {
   char *own_name;
 
-  strcpy(buf, "Address  Atrium  Guests  Owner\r\n");
-  strcat(buf, "-------  ------  ------  ------------\r\n");
+  STRCPY(buf, "Address  Atrium  Guests  Owner\r\n");
+  STRCAT(buf, "-------  ------  ------  ------------\r\n");
   send_to_char(buf, ch);
 
   for (struct landlord *llord = landlords; llord; llord = llord->next)
@@ -943,7 +944,7 @@ void House_list_guests(struct char_data *ch, struct house_control_rec *i, int qu
   int j;
   char buf[MAX_STRING_LENGTH], buf2[MAX_NAME_LENGTH + 2];
 
-  strcpy(buf, "  Guests: ");
+  STRCPY(buf, "  Guests: ");
   int x = 0;
   for (j = 0; j < MAX_GUESTS; j++)
   {
@@ -956,12 +957,12 @@ void House_list_guests(struct char_data *ch, struct house_control_rec *i, int qu
       continue;
 
     snprintf(buf2, sizeof(buf2), "%s, ", temp);
-    strcat(buf, CAP(buf2));
+    STRCAT(buf, CAP(buf2));
     x++;
     DELETE_ARRAY_IF_EXTANT(temp);
   }
   if (!x)
-    strcat(buf, "None");
-  strcat(buf, "\r\n");
+    STRCAT(buf, "None");
+  STRCAT(buf, "\r\n");
   send_to_char(buf, ch);
 }

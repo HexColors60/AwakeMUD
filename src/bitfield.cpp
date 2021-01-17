@@ -10,6 +10,7 @@
 #include "bitfield.h"
 #include "structs.h"
 #include "utils.h"
+#include "string_safety.h"
 
 // ______________________________
 //
@@ -263,7 +264,7 @@ const char *Bitfield::ToString() const
 
   if (buf_ptr == buffer) {
     // if no flags were set, just set it to "0":
-    strcpy(buffer, "0");
+    STRCPY(buffer, "0");
   } else
     *buf_ptr = '\0';
 
@@ -325,7 +326,7 @@ void Bitfield::PrintBits(char *dest, size_t dest_size,
     }
 
   if (left < 1) {
-    strncpy(dest, "<TRUNCATED>", dest_size);
+    strlcpy(dest, "<TRUNCATED>", dest_size);
     len = MIN(dest_size-1, 11);
   }
 

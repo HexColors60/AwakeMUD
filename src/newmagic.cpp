@@ -12,6 +12,7 @@
 #include "screen.h"
 #include "constants.h"
 #include "olc.h"
+#include "string_safety.h"
 
 #define POWER(name) void (name)(struct char_data *ch, struct char_data *spirit, struct spirit_data *spiritdata, char *arg)
 #define SPELLCASTING 0
@@ -46,7 +47,7 @@ void adept_release_spell(struct char_data *ch)
       ospell->spirit = NULL;
       break;
     }
-  strcpy(buf, spells[spell->spell].name);
+  STRCPY(buf, spells[spell->spell].name);
   if (spell->spell == SPELL_INCATTR || spell->spell == SPELL_INCCYATTR ||
       spell->spell == SPELL_DECATTR || spell->spell == SPELL_DECCYATTR)
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " (%s)", attributes[spell->subtype]);
@@ -1801,7 +1802,7 @@ void mob_magic(struct char_data *ch)
       snprintf(buf, sizeof(buf), "%s %s", wound_name[number(1, 4)], GET_CHAR_NAME(FIGHTING(ch)));
       break;
     default:
-      strcpy(buf, GET_CHAR_NAME(FIGHTING(ch)));
+      STRCPY(buf, GET_CHAR_NAME(FIGHTING(ch)));
   }
   cast_spell(ch, spell, sub, force, buf);
 }
@@ -2405,12 +2406,12 @@ ACMD(do_cast)
     send_to_char("Cast what spell?\r\n", ch);
     return;
   }
-  strcpy(tokens, argument);
+  STRCPY(tokens, argument);
   if (strtok(tokens, "\"") && (s = strtok(NULL, "\""))) {
-    strcpy(spell_name, s);
+    STRCPY(spell_name, s);
     if ((s = strtok(NULL, "\0"))) {
       skip_spaces(&s);
-      strcpy(buf1, s);
+      STRCPY(buf1, s);
     } else
       *buf1 = '\0';
     one_argument(argument, buf);
@@ -2418,10 +2419,10 @@ ACMD(do_cast)
   } else {
     half_chop(argument, buf, buf1);
     if (!(force = atoi(buf))) {
-      strcpy(spell_name, buf);
+      STRCPY(spell_name, buf);
     } else {
       half_chop(buf1, buf2, buf1);
-      strcpy(spell_name, buf2);
+      STRCPY(spell_name, buf2);
     }
   }
   for (;spell; spell = spell->next)
@@ -2562,7 +2563,7 @@ ACMD(do_conjure)
       if (is_abbrev(buf1, spirits[spirit].name))
         break;
     if (spirit == NUM_SPIRITS) {
-      strcpy(buf, "Which spirit do you wish to conjure? In your current domain, you can conjure");
+      STRCPY(buf, "Which spirit do you wish to conjure? In your current domain, you can conjure");
       bool have_sent_text = FALSE;
       for (spirit = 0; spirit < NUM_SPIRITS; spirit++)
         if (GET_DOMAIN(ch) == ((spirit == SPIRIT_MIST || spirit == SPIRIT_STORM || spirit == SPIRIT_WIND) ? SPIRIT_SKY : spirit)) {
@@ -2806,7 +2807,7 @@ ACMD(do_learn)
   spell = new spell_data;
   if (GET_OBJ_VAL(obj, 1) == SPELL_INCATTR || GET_OBJ_VAL(obj, 1) == SPELL_INCCYATTR ||
       GET_OBJ_VAL(obj, 1) == SPELL_DECATTR || GET_OBJ_VAL(obj, 1) == SPELL_DECCYATTR) {
-    strcpy(buf, spells[GET_OBJ_VAL(obj, 1)].name);
+    STRCPY(buf, spells[GET_OBJ_VAL(obj, 1)].name);
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " (%s)", attributes[GET_OBJ_VAL(obj, 3)]);
     spell->name = str_dup(buf);
   } else
@@ -3675,18 +3676,18 @@ ACMD(do_deactivate)
   if (GET_TRADITION(ch) == TRAD_ADEPT && !str_str(argument, "pain editor") && !str_str(argument, "voice modulator")) {
     char name[120], tokens[MAX_STRING_LENGTH], *s;
     extern int ability_cost(int abil, int level);
-    strncpy(tokens, argument, sizeof(tokens) - 1);
+    STRCPY(tokens, argument);
     if (strtok(tokens, "\"") && (s = strtok(NULL, "\""))) {
-      strncpy(name, s, sizeof(name) - 1);
+      STRCPY(name, s);
       if ((s = strtok(NULL, "\0"))) {
         skip_spaces(&s);
-        strncpy(buf1, s, sizeof(buf1) - 1);
+        STRCPY(buf1, s);
       } else
         *buf1 = '\0';
       one_argument(argument, buf);
     } else {
       skip_spaces(&argument);
-      strncpy(name, argument, sizeof(name) - 1);
+      STRCPY(name, argument);
     }
       
     // Find powers they have skill in first.
@@ -4367,7 +4368,7 @@ ACMD(do_focus)
         ospell->spirit = ch;
         break;
       }
-    strcpy(buf, spells[spell->spell].name);                                                                                      
+    STRCPY(buf, spells[spell->spell].name);                                                                                      
     if (spell->spell == SPELL_INCATTR || spell->spell == SPELL_INCCYATTR ||
         spell->spell == SPELL_DECATTR || spell->spell == SPELL_DECCYATTR)
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " (%s)", attributes[spell->subtype]);

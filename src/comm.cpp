@@ -67,6 +67,7 @@ typedef SOCKET  socket_t;
 #include "protocol.h"
 #include "perfmon.h"
 #include "config.h"
+#include "string_safety.h"
 
 
 const unsigned perfmon::kPulsePerSecond = PASSES_PER_SEC;
@@ -298,7 +299,7 @@ void copyover_recover()
     memset ((char *) d, 0, sizeof (struct descriptor_data));
     init_descriptor (d,desc); /* set up various stuff */
     
-    strcpy(d->host, host);
+    STRCPY(d->host, host);
     d->next = descriptor_list;
     descriptor_list = d;
     
@@ -1152,10 +1153,10 @@ void make_prompt(struct descriptor_data * d)
                     default:
                       snprintf(str, sizeof(str), "NA");
                   }
-                else strcpy(str, "ML");
+                else STRCPY(str, "ML");
                 
               } else
-                strcpy(str, "NA");
+                STRCPY(str, "NA");
               break;
             case 'b':       // ballistic
               snprintf(str, sizeof(str), "%d", GET_BALLISTIC(d->character));
@@ -1318,19 +1319,19 @@ void make_prompt(struct descriptor_data * d)
               if (GET_REAL_LEVEL(d->character) >= LVL_BUILDER)
                 snprintf(str, sizeof(str), "%d", d->character->player_specials->saved.zonenum);
               else
-                strcpy(str, "@z");
+                STRCPY(str, "@z");
               break;
             case 'v':
               if (GET_REAL_LEVEL(d->character) >= LVL_BUILDER)
                 snprintf(str, sizeof(str), "%ld", d->character->in_room->number);
               else
-                strcpy(str, "@v");
+                STRCPY(str, "@v");
               break;
             case '@':
-              strcpy(str, "@");
+              STRCPY(str, "@");
               break;
             case '!':
-              strcpy(str, "\r\n");
+              STRCPY(str, "\r\n");
               break;
             default:
               snprintf(str, sizeof(str), "@%c", *prompt);
@@ -1355,7 +1356,7 @@ void write_to_q(const char *txt, struct txt_q * queue, int aliased)
 {
   struct txt_block *temp = new txt_block;
   temp->text = new char[strlen(txt) + 1];
-  strcpy(temp->text, txt);
+  STRCPY(temp->text, txt);
   temp->aliased = aliased;
   
   /* queue empty? */
@@ -1380,7 +1381,7 @@ int get_from_q(struct txt_q * queue, char *dest, int *aliased)
     return 0;
   
   tmp = queue->head;
-  strcpy(dest, queue->head->text);
+  STRCPY(dest, queue->head->text);
   *aliased = queue->head->aliased;
   queue->head = queue->head->next;
   
@@ -1547,7 +1548,7 @@ int new_descriptor(int s)
             (int) ((addr & 0x000000FF)));
   } else
   {
-    strncpy(newd->host, from->h_name, HOST_LENGTH);
+    strlcpy(newd->host, from->h_name, HOST_LENGTH);
     *(newd->host + HOST_LENGTH) = '\0';
   }
   
@@ -1582,19 +1583,12 @@ int process_output(struct descriptor_data *t) {
   if ( !t )
     return 0;
   
-  /* we may need this \r\n for later -- see below */
-  strcpy(i, "\r\n");
-  
-  /* now, append the 'real' output */
-  strcpy(i + 2, t->output);
+  /* we may need this \r\n for later -- see below */  /* v-- add the extra CRLF if the person isn't in compact mode */
+  snprintf(i, sizeof(i), "\r\n%s%s", t->output, (!t->connected && t->character) ? "\r\n" : "");
   
   /* if we're in the overflow state, notify the user */
   if (t->bufptr < 0)
-    strcat(i, "**OVERFLOW**");
-  
-  /* add the extra CRLF if the person isn't in compact mode */
-  if (!t->connected && t->character)
-    strcat(i + 2, "\r\n");
+    STRCAT(i, "**OVERFLOW**");
   
   /*
    * now, send the output.  If this is an 'interruption', use the prepended
@@ -1798,12 +1792,12 @@ int process_input(struct descriptor_data *t) {
     failed_subst = 0;
     
     if (*tmp == '!' && t->connected != CON_CNFPASSWD )
-      strcpy(tmp, t->last_input);
+      STRCPY(tmp, t->last_input);
     else if (*tmp == '|' && t->connected != CON_CNFPASSWD ) {
       if (!(failed_subst = perform_subst(t, t->last_input, tmp)))
-        strcpy(t->last_input, tmp);
+        STRCPY(t->last_input, tmp);
     } else
-      strcpy(t->last_input, tmp);
+      STRCPY(t->last_input, tmp);
     
     if (!failed_subst)
       write_to_q(tmp, &t->input, 0);
@@ -1835,7 +1829,7 @@ int process_input(struct descriptor_data *t) {
  */
 int perform_subst(struct descriptor_data *t, char *orig, char *subst)
 {
-  char New[MAX_INPUT_LENGTH + 5];
+  char New[MAX_INPUT_LENGTH + 20];
   
   char *first, *second, *strpos;
   
@@ -1866,20 +1860,20 @@ int perform_subst(struct descriptor_data *t, char *orig, char *subst)
   /* now, we construct the new string for output. */
   
   /* first, everything in the original, up to the string to be replaced */
-  strncpy(New, orig, (strpos - orig));
+  strlcpy(New, orig, (strpos - orig));
   New[(strpos - orig)] = '\0';
   
   /* now, the replacement string */
-  strncat(New, second, (MAX_INPUT_LENGTH - strlen(New) - 1));
+  STRCAT(New, second);
   
   /* now, if there's anything left in the original after the string to
    * replaced, copy that too. */
   if (((strpos - orig) + strlen(first)) < strlen(orig))
-    strncat(New, strpos + strlen(first), (MAX_INPUT_LENGTH - strlen(New) - 1));
+    STRCAT(New, strpos + strlen(first));
   
   /* terminate the string in case of an overflow from strncat */
   New[MAX_INPUT_LENGTH-1] = '\0';
-  strcpy(subst, New);
+  STRCPY(subst, New);
   
   return 0;
 }
@@ -2223,7 +2217,7 @@ char *colorize(struct descriptor_data *d, const char *str, bool skip_check)
   //const char *color;
   
   // KaVir's protocol snippet handles this, so...
-  strcpy(buffer, str);
+  STRCPY(buffer, str);
   return &buffer[0];
   /*
   
@@ -2233,7 +2227,7 @@ char *colorize(struct descriptor_data *d, const char *str, bool skip_check)
     snprintf(colorize_error_buf, sizeof(colorize_error_buf), "SYSERR: Received empty string to colorize() for descriptor %d (orig %s, char %s).",
             d->descriptor, d->original ? GET_NAME(d->original) : "(null)", d->character ? GET_CHAR_NAME(d->character) : "(null)");
     mudlog(colorize_error_buf, NULL, LOG_SYSLOG, TRUE);
-    strcpy(buffer, "(null)");
+    STRCPY(buffer, "(null)");
     return buffer;
   }
   
@@ -2528,7 +2522,7 @@ char* strip_ending_punctuation_new(const char* orig) {
   int len = strlen(orig);
   char* stripped = new char[len];
   
-  strcpy(stripped, orig);
+  STRCPY(stripped, orig);
   
   char* c = stripped + len - 1;
   
@@ -2855,14 +2849,14 @@ const char *act(const char *str, int hide_invisible, struct char_data * ch,
               GET_CHAR_NAME(ch), ch->in_room ? GET_ROOM_NAME(ch->in_room) : "n/a",
               ch->in_veh ? GET_VEH_NAME(ch->in_veh) : "n/a");
     } else {
-      strcat(buf, " ...No character.");
+      STRCAT(buf, " ...No character.");
     }
     if (obj) {
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "\r\nobj: %s, in_room %s, in_veh %s",
               GET_OBJ_NAME(obj), obj->in_room ? GET_ROOM_NAME(obj->in_room) : "n/a",
               obj->in_veh ? GET_VEH_NAME(obj->in_veh) : "n/a");
     } else {
-      strcat(buf, " ...No obj.");
+      STRCAT(buf, " ...No obj.");
     }
     mudlog(buf, NULL, LOG_SYSLOG, TRUE);
     return NULL;

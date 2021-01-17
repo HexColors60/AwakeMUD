@@ -9,6 +9,7 @@
 #include "file.h"
 #include "awake.h"  // for MAX_STRING_LENGTH
 #include "utils.h"  // for log()
+#include "string_safety.h"
 #include <new>
 
 File::File()
@@ -52,10 +53,10 @@ bool File::Open(const char *_filename, const char *_mode)
     return false;
 
   memset(filename, 0, MAX_FILE_LENGTH);
-  strncpy(filename, _filename, MAX_FILE_LENGTH);
+  strlcpy(filename, _filename, MAX_FILE_LENGTH);
 
   memset(mode, 0, 8);
-  strncpy(mode, _mode, 8);
+  strlcpy(mode, _mode, 8);
 
   line_num = 0;
 
@@ -135,7 +136,7 @@ char *File::ReadString(const char* section)
       *ptr = '\0';
       done = true;
     } else
-      strcat(line, "\r\n");
+      STRCAT(line, "\r\n");
 
     size_t line_len = strlen(line);
 
@@ -145,9 +146,9 @@ char *File::ReadString(const char* section)
       log_vfprintf("Error: string too long (%s, line %d) -- truncating section '%s'.",
           Filename(), LineNumber(), section);
 
-      strncpy(buf+buf_len, line, MAX_STRING_LENGTH - buf_len);
+      strlcpy(buf+buf_len, line, MAX_STRING_LENGTH - buf_len);
       *(buf+MAX_STRING_LENGTH) = '\0';
-      strcat(buf, "\r\n");
+      STRCAT(buf, "\r\n");
 
       // if line doesn't have the '~', then we need to find it later
       skip_to_end = (strchr(line, '~') == NULL);
@@ -155,7 +156,7 @@ char *File::ReadString(const char* section)
       break;
     }
 
-    strcat(buf, line);
+    STRCAT(buf, line);
     buf_len += line_len;
   }
 
@@ -175,7 +176,7 @@ char *File::ReadString(const char* section)
 
   if (buf_len > 0) {
     char *res = new char[buf_len+1];
-    strcpy(res, buf);
+    STRCPY(res, buf);
 
     return res;
   }

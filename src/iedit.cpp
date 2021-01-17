@@ -27,6 +27,7 @@
 #include "newmagic.h"
 #include "constants.h"
 #include "handler.h"
+#include "string_safety.h"
 
 #define OBJ     d->edit_obj
 
@@ -78,7 +79,7 @@ void iedit_disp_biotype_menu(struct descriptor_data * d);
 /* For container flags */
 void iedit_disp_container_flags_menu(struct descriptor_data * d)
 {
-  sprintbit(GET_OBJ_VAL(d->edit_obj, 1), container_bits, buf1);
+  sprintbit(GET_OBJ_VAL(d->edit_obj, 1), container_bits, buf1, sizeof(buf1));
   send_to_char(CH, "1) Closeable\r\n"
                "2) Pickproof\r\n"
                "3) Closed\r\n"
@@ -209,7 +210,7 @@ void iedit_disp_cybereyes_menu(struct descriptor_data *d)
   CLS(CH);
   for (int y = 0; y < NUM_EYEMODS; y += 2)
     send_to_char(CH, "%2d) %-20s %2d) %-20s\r\n", y+1, eyemods[y], y+2, y+1 < NUM_EYEMODS ? eyemods[y+1] : "");
-  sprintbit(GET_OBJ_VAL(OBJ, 3), eyemods, buf1);
+  sprintbit(GET_OBJ_VAL(OBJ, 3), eyemods, buf1, sizeof(buf1));
   send_to_char(CH, "Set Options: ^c%s^n\r\nEnter options (0 to quit): ", buf1);
 }
 
@@ -218,7 +219,7 @@ void iedit_disp_firemodes_menu(struct descriptor_data *d)
   CLS(CH);
   for (int y = MODE_SS; y <= MODE_FA; y++)
     send_to_char(CH, "  %d) %s\r\n", y, fire_mode[y]);
-  sprintbit(GET_OBJ_VAL(OBJ, 10), fire_mode, buf1);
+  sprintbit(GET_OBJ_VAL(OBJ, 10), fire_mode, buf1, sizeof(buf1));
   send_to_char(CH, "Set Options: ^c%s^n\r\nEnter options (0 to quit): ", buf1);
 }
 
@@ -227,7 +228,7 @@ void iedit_disp_mod_menu(struct descriptor_data *d)
   CLS(CH);
   for (int y = ENGINE_ELECTRIC; y <= ENGINE_DIESEL; y++)
     send_to_char(CH, "  %d) %s\r\n", y, engine_type[y]);
-  sprintbit(GET_OBJ_VAL(OBJ, 5), engine_type, buf1);
+  sprintbit(GET_OBJ_VAL(OBJ, 5), engine_type, buf1, sizeof(buf1));
   send_to_char(CH, "Set Options: ^c%s^n\r\nEnter options (0 to quit): ", buf1);
 }
 
@@ -362,12 +363,12 @@ void iedit_disp_val1_menu(struct descriptor_data * d)
         else
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%2d) %-20s ", c, skills[c].name);
         if (!(line % 3)) {
-          strcat(buf, "\r\n");
+          STRCAT(buf, "\r\n");
           send_to_char(buf, CH);
         }
       }
       if ((line % 3) != 0) {
-        strcat(buf, "\r\nEnter a skill (0 to quit): ");
+        STRCAT(buf, "\r\nEnter a skill (0 to quit): ");
         send_to_char(buf, CH);
       }
       break;
@@ -704,7 +705,7 @@ void iedit_disp_val4_menu(struct descriptor_data * d)
           send_to_char("0) Standard\r\n1) Breakable\r\nEnter Tooth Compartment Type: ", CH);
           break;
         case CYB_HANDRAZOR:
-          sprintbit(GET_OBJ_VAL(OBJ, 3), hand_razors, buf1);
+          sprintbit(GET_OBJ_VAL(OBJ, 3), hand_razors, buf1, sizeof(buf1));
           send_to_char(CH, "1) Retractable\r\n2) Improved\r\nCurrent Flags: ^c%s^n\r\nEnter options (0 to quit): ", buf1);
           break;
         case CYB_HANDBLADE:
@@ -2389,7 +2390,7 @@ void iedit_parse(struct descriptor_data * d, const char *arg)
               number--;
               TOGGLE_BIT(GET_OBJ_VAL(OBJ, 3), 1 << number);
               CLS(CH);
-              sprintbit(GET_OBJ_VAL(OBJ, 3), hand_razors, buf1);
+              sprintbit(GET_OBJ_VAL(OBJ, 3), hand_razors, buf1, sizeof(buf1));
               send_to_char(CH, "1) Retractable\r\n2) Improved\r\nCurrent Flags: ^c%s^n\r\nEnter options (0 to quit): ", buf1);
               return;
             case CYB_BONELACING:

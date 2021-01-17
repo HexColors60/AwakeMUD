@@ -21,6 +21,7 @@
 #include "handler.h"
 #include "constants.h"
 #include "bullet_pants.h"
+#include "string_safety.h"
 
 void write_mobs_to_disk(int zone);
 
@@ -100,7 +101,7 @@ void medit_disp_menu(struct descriptor_data *d)
                
   send_to_char(CH, "h) Ammunition\r\n");
   sprinttype(GET_SEX(MOB), genders, buf1, sizeof(buf1));
-  //  strcpy(buf1, genders[GET_SEX(d->edit_mob)]);
+  //  STRCPY(buf1, genders[GET_SEX(d->edit_mob)]);
   send_to_char(CH, "i) Gender: %s%s%s, ", CCCYN(CH, C_CMP), buf1,
                CCNRM(CH, C_CMP));
   send_to_char(CH, "j) Weight: %s%d%s, ", CCCYN(CH, C_CMP), GET_WEIGHT(MOB),

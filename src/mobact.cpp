@@ -24,6 +24,7 @@
 #include "quest.h"
 #include "bullet_pants.h"
 #include "bitfield.h"
+#include "string_safety.h"
 
 ACMD_DECLARE(do_say);
 
@@ -81,7 +82,7 @@ const char *print_bits(int bits)
 
   if (buf_ptr == bitbuffer) {
     // if no flags were set, just set it to "0":
-    strcpy(bitbuffer, "0");
+    STRCPY(bitbuffer, "0");
   } else
     *buf_ptr = '\0';
 
@@ -100,7 +101,7 @@ void populate_mobact_aggression_octets() {
   ASSIGN_AGGRO_OCTET(MOB_AGGR_TROLL);
   ASSIGN_AGGRO_OCTET(MOB_AGGR_HUMAN);
 #ifdef MOBACT_DEBUG
-  strncpy(buf, "Static mobact aggr info:", sizeof(buf) - 1);
+  STRCPY(buf, "Static mobact aggr info:");
   for (int i = 0; i < NUM_AGGRO_OCTETS; i++)
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " %d=%s (%d)", i, print_bits(AGGRESSION_OCTETS[i]), AGGRESSION_OCTETS[i]);
   log(buf);
@@ -388,7 +389,7 @@ bool mobact_process_in_vehicle_guard(struct char_data *ch) {
   // Precondition: Vehicle must exist, we must be manning or driving, and we must not be astral.
   if (!ch->in_veh || !(AFF_FLAGGED(ch, AFF_PILOT) || AFF_FLAGGED(ch, AFF_MANNING)) || IS_ASTRAL(ch)) {
 #ifdef MOBACT_DEBUG
-    strncpy(buf3, "m_p_i_v_g: no veh, or not pilot/manning, or am astral.", sizeof(buf));
+    STRCPY(buf3, "m_p_i_v_g: no veh, or not pilot/manning, or am astral.");
     do_say(ch, buf3, 0, 0);
 #endif
     return FALSE;
@@ -397,7 +398,7 @@ bool mobact_process_in_vehicle_guard(struct char_data *ch) {
   // Precondition: If our vehicle is nested, just give up.
   if (ch->in_veh->in_veh) {
 #ifdef MOBACT_DEBUG
-    strncpy(buf3, "m_p_i_v_g: nested vehicle.", sizeof(buf));
+    STRCPY(buf3, "m_p_i_v_g: nested vehicle.");
     do_say(ch, buf3, 0, 0);
 #endif
     return FALSE;
@@ -408,7 +409,7 @@ bool mobact_process_in_vehicle_guard(struct char_data *ch) {
   // Peaceful room, or I'm not actually a guard? Bail out.
   if (ROOM_FLAGGED(in_room, ROOM_PEACEFUL) || !(MOB_FLAGGED(ch, MOB_GUARD))) {
 #ifdef MOBACT_DEBUG
-    strncpy(buf3, "m_p_i_v_g: peaceful or not guard.", sizeof(buf));
+    STRCPY(buf3, "m_p_i_v_g: peaceful or not guard.");
     do_say(ch, buf3, 0, 0);
 #endif
     return FALSE;
@@ -444,7 +445,7 @@ bool mobact_process_in_vehicle_guard(struct char_data *ch) {
   // No targets? Bail out.
   if (!tveh && !vict) {
 #ifdef MOBACT_DEBUG
-    strncpy(buf3, "m_p_i_v_g: No targets, stopping.", sizeof(buf));
+    STRCPY(buf3, "m_p_i_v_g: No targets, stopping.");
     do_say(ch, buf3, 0, 0);
 #endif
     return FALSE;
@@ -457,7 +458,7 @@ bool mobact_process_in_vehicle_guard(struct char_data *ch) {
   // Driver? It's rammin' time.
   if (AFF_FLAGGED(ch, AFF_PILOT)) {
 #ifdef MOBACT_DEBUG
-    strncpy(buf3, "m_p_i_v_g: Ramming.", sizeof(buf));
+    STRCPY(buf3, "m_p_i_v_g: Ramming.");
     do_say(ch, buf3, 0, 0);
 #endif
     do_raw_ram(ch, ch->in_veh, tveh, vict);
@@ -470,7 +471,7 @@ bool mobact_process_in_vehicle_guard(struct char_data *ch) {
     struct obj_data *mount = get_mount_manned_by_ch(ch);
     if (mount && mount_has_weapon(mount)) {
 #ifdef MOBACT_DEBUG
-      strncpy(buf3, "m_p_i_v_g: Firing.", sizeof(buf));
+      STRCPY(buf3, "m_p_i_v_g: Firing.");
       do_say(ch, buf3, 0, 0);
 #endif
       do_raw_target(ch, ch->in_veh, tveh, vict, FALSE, mount);
@@ -492,7 +493,7 @@ bool mobact_process_in_vehicle_aggro(struct char_data *ch) {
   // Precondition: Vehicle must exist, we must be manning or driving, and we must not be astral.
   if (!ch->in_veh || !(AFF_FLAGGED(ch, AFF_PILOT) || AFF_FLAGGED(ch, AFF_MANNING)) || IS_ASTRAL(ch)) {
 #ifdef MOBACT_DEBUG
-    strncpy(buf3, "m_p_i_v_a: no veh, not pilot/manning, or am astral.", sizeof(buf));
+    STRCPY(buf3, "m_p_i_v_a: no veh, not pilot/manning, or am astral.");
     do_say(ch, buf3, 0, 0);
 #endif
     return FALSE;
@@ -501,7 +502,7 @@ bool mobact_process_in_vehicle_aggro(struct char_data *ch) {
   // Precondition: If our vehicle is nested, just give up.
   if (ch->in_veh->in_veh) {
 #ifdef MOBACT_DEBUG
-    strncpy(buf3, "m_p_i_v_a: nested veh.", sizeof(buf));
+    STRCPY(buf3, "m_p_i_v_a: nested veh.");
     do_say(ch, buf3, 0, 0);
 #endif
     return FALSE;
@@ -511,7 +512,7 @@ bool mobact_process_in_vehicle_aggro(struct char_data *ch) {
   
   if (ROOM_FLAGGED(in_room, ROOM_PEACEFUL)) {
 #ifdef MOBACT_DEBUG
-    strncpy(buf3, "m_p_i_v_a: Room is peaceful.", sizeof(buf));
+    STRCPY(buf3, "m_p_i_v_a: Room is peaceful.");
     do_say(ch, buf3, 0, 0);
 #endif
     return FALSE;
@@ -519,7 +520,7 @@ bool mobact_process_in_vehicle_aggro(struct char_data *ch) {
   
   if (!mob_is_aggressive(ch, TRUE) && GET_MOBALERT(ch) != MALERT_ALARM) {
 #ifdef MOBACT_DEBUG
-    strncpy(buf3, "m_p_i_v_a: I am neither aggressive nor alarmed.", sizeof(buf));
+    STRCPY(buf3, "m_p_i_v_a: I am neither aggressive nor alarmed.");
     do_say(ch, buf3, 0, 0);
 #endif
     return FALSE;
@@ -551,7 +552,7 @@ bool mobact_process_in_vehicle_aggro(struct char_data *ch) {
   
   if (!tveh && !vict) {
 #ifdef MOBACT_DEBUG
-    strncpy(buf3, "m_p_i_v_a: No target.", sizeof(buf));
+    STRCPY(buf3, "m_p_i_v_a: No target.");
     do_say(ch, buf3, 0, 0);
 #endif
     return FALSE;
@@ -564,7 +565,7 @@ bool mobact_process_in_vehicle_aggro(struct char_data *ch) {
   // Driver? It's rammin' time.
   if (AFF_FLAGGED(ch, AFF_PILOT)) {
 #ifdef MOBACT_DEBUG
-    strncpy(buf3, "m_p_i_v_a: Ramming.", sizeof(buf));
+    STRCPY(buf3, "m_p_i_v_a: Ramming.");
     do_say(ch, buf3, 0, 0);
 #endif
     do_raw_ram(ch, ch->in_veh, tveh, vict);
@@ -577,7 +578,7 @@ bool mobact_process_in_vehicle_aggro(struct char_data *ch) {
     struct obj_data *mount = get_mount_manned_by_ch(ch);
     if (mount && mount_has_weapon(mount)) {
 #ifdef MOBACT_DEBUG
-      strncpy(buf3, "m_p_i_v_a: Firing.", sizeof(buf));
+      STRCPY(buf3, "m_p_i_v_a: Firing.");
       do_say(ch, buf3, 0, 0);
 #endif
       do_raw_target(ch, ch->in_veh, tveh, vict, FALSE, mount);
@@ -610,7 +611,7 @@ bool mobact_process_aggro(struct char_data *ch, struct room_data *room) {
   
   if (ROOM_FLAGGED(room, ROOM_PEACEFUL)) {
 #ifdef MOBACT_DEBUG
-    strncpy(buf3, "m_p_a: Room is peaceful.", sizeof(buf));
+    STRCPY(buf3, "m_p_a: Room is peaceful.");
     do_say(ch, buf3, 0, 0);
 #endif
     return FALSE;
@@ -618,7 +619,7 @@ bool mobact_process_aggro(struct char_data *ch, struct room_data *room) {
   
   if (!mob_is_aggressive(ch, TRUE) && GET_MOBALERT(ch) != MALERT_ALARM) {
 #ifdef MOBACT_DEBUG
-    strncpy(buf3, "m_p_a: I am neither aggressive nor alarmed.", sizeof(buf));
+    STRCPY(buf3, "m_p_a: I am neither aggressive nor alarmed.");
     do_say(ch, buf3, 0, 0);
 #endif
     return FALSE;
@@ -1020,7 +1021,7 @@ bool mobact_process_movement(struct char_data *ch) {
     // NPC standing outside an elevator? Maybe they want to call it.
     if (ch->in_room->func == call_elevator && number(0, 6) == 0) {
       char argument[500];
-      strcpy(argument, "button");
+      STRCPY(argument, "button");
       ch->in_room->func(ch, ch->in_room, find_command("push"), argument);
       return TRUE;
     }
@@ -1053,7 +1054,7 @@ bool mobact_process_movement(struct char_data *ch) {
           // We found a valid button to push. Push it.
           char push_arg[10];
           if (target_floor == 0)
-            strcpy(push_arg, "g");
+            STRCPY(push_arg, "g");
           else if (target_floor < 0)
             snprintf(push_arg, sizeof(push_arg), "b%d", -target_floor);
           else

@@ -44,6 +44,7 @@ using namespace std;
 #include "newdb.h"
 #include "config.h"
 #include "bullet_pants.h"
+#include "string_safety.h"
 
 extern class memoryClass *Mem;
 extern struct time_info_data time_info;
@@ -512,7 +513,7 @@ int return_general(int skill_num)
 char *capitalize(const char *source)
 {
   static char dest[MAX_STRING_LENGTH];
-  strcpy(dest, source);
+  STRCPY(dest, source);
   
   int len = strlen(source);
   int index = 0;
@@ -541,7 +542,7 @@ char *string_to_uppercase(const char *source) {
 char *decapitalize_a_an(const char *source)
 {
   static char dest[MAX_STRING_LENGTH];
-  strcpy(dest, source);
+  STRCPY(dest, source);
   
   int len = strlen(source);
   int index = 0;
@@ -560,16 +561,17 @@ char *decapitalize_a_an(const char *source)
 
 // duplicate a string -- uses new!
 char *str_dup(const char *source)
-{
+{ 
   if (!source)
     return NULL;
-  
-  char *New = new char[strlen(source) + 2];
+    
+  size_t newsize = strlen(source) + 1;
+  char *New = new char[newsize];
   
   // This shouldn't be needed, but just in case.
   // memset(New, 0, sizeof(char) * (strlen(source) + 1));
   
-  strncpy(New, source, strlen(source) + 1);
+  strlcpy(New, source, newsize);
   return New;
 }
 
@@ -744,7 +746,7 @@ void mudlog(const char *str, struct char_data *ch, int log, bool file)
   tmp = asctime(localtime(&ct));
   
   // Fallback-- it's blank if we find no useful conditions.
-  strcpy(buf2, "");
+  STRCPY(buf2, "");
   
   if (ch && (ch->in_room || ch->in_veh)) {
     if (ch->desc)
@@ -838,14 +840,14 @@ void mudlog(const char *str, struct char_data *ch, int log, bool file)
     }
 }
 
-void sprintbit(long vektor, const char *names[], char *result)
+void sprintbit(long vektor, const char *names[], char *result, size_t result_size)
 {
   long nr;
   
   *result = '\0';
   
   if (vektor < 0) {
-    strcpy(result, "SPRINTBIT ERROR!");
+    STRCPY(result, "SPRINTBIT ERROR!");
     return;
   }
   
@@ -855,11 +857,11 @@ void sprintbit(long vektor, const char *names[], char *result)
       if (*names[nr] != '\n') {
         if (have_printed) {
           // Better formatting. Better coding. Papa Lucien's.
-          strcat(result, ", ");
+          strlcat(result, ", ", result_size);
         }
-        strcat(result, names[nr]);
+        strlcat(result, names[nr], result_size);
       } else {
-        strcat(result, "UNDEFINED ");
+        strlcat(result, "UNDEFINED ", result_size);
       }
       have_printed = TRUE;
     }
@@ -868,19 +870,19 @@ void sprintbit(long vektor, const char *names[], char *result)
   }
   
   if (!*result)
-    strcat(result, "None ");
+    strlcat(result, "None ", result_size);
 }
 
-void sprinttype(int type, const char *names[], char *result, int result_size)
+void sprinttype(int type, const char *names[], char *result, size_t result_size)
 {
   snprintf(result, result_size, "%s", names[type]);
   
   if (str_cmp(result, "(null)") == 0) {
-    strcpy(result, "UNDEFINED");
+    strlcpy(result, "UNDEFINED", result_size);
   }
 }
 
-void sprint_obj_mods(struct obj_data *obj, char *result)
+void sprint_obj_mods(struct obj_data *obj, char *result, size_t result_size)
 {
   *result = 0;
   if (obj->obj_flags.bitvector.GetNumSet() > 0)
@@ -888,7 +890,7 @@ void sprint_obj_mods(struct obj_data *obj, char *result)
     char xbuf[MAX_STRING_LENGTH];
     obj->obj_flags.bitvector.PrintBits(xbuf, MAX_STRING_LENGTH,
                                        affected_bits, AFF_MAX);
-    snprintf(result, sizeof(result),"%s %s", result, xbuf);
+    snprintf(result, result_size, "%s %s", result, xbuf);
   }
   
   for (int i = 0; i < MAX_OBJ_AFFECT; i++)
@@ -896,7 +898,7 @@ void sprint_obj_mods(struct obj_data *obj, char *result)
     {
       char xbuf[MAX_STRING_LENGTH];
       sprinttype(obj->affected[i].location, apply_types, xbuf, sizeof(xbuf));
-      snprintf(result, sizeof(result),"%s (%+d %s)",
+      snprintf(result, result_size, "%s (%+d %s)",
               result, obj->affected[i].modifier, xbuf);
     }
   return;
@@ -1039,7 +1041,7 @@ void add_follower(struct char_data * ch, struct char_data * leader)
  *
  * Returns the number of lines advanced in the file.
  */
-int get_line(FILE * fl, char *buf)
+int get_line(FILE * fl, char *buf, size_t bufsize)
 {
   char temp[256];
   int lines = 0;
@@ -1054,7 +1056,7 @@ int get_line(FILE * fl, char *buf)
   if (feof(fl))
     return 0;
   else {
-    strcpy(buf, temp);
+    strlcpy(buf, temp, bufsize);
     return lines;
   }
 }
@@ -1091,12 +1093,12 @@ char * buf_mod(char *rbuf, int rbuf_len, const char *name, int bonus)
   return rbuf;
 }
 
-char * buf_roll(char *rbuf, const char *name, int bonus)
+char * buf_roll(char *rbuf, size_t rbuf_len, const char *name, int bonus)
 {
   if ( !rbuf )
     return rbuf;
   rbuf += strlen(rbuf);
-  snprintf(rbuf, sizeof(rbuf), " [%s %d]", name, bonus);
+  snprintf(rbuf, rbuf_len, " [%s %d]", name, bonus);
   return rbuf;
 }
 
@@ -2747,7 +2749,7 @@ char *generate_new_loggable_representation(struct obj_data *obj) {
   memset(log_string, 0, sizeof(char) * MAX_STRING_LENGTH);
   
   if (!obj) {
-    strcpy(log_string, "SYSERR: Null object passed to generate_loggable_representation().");
+    STRCPY(log_string, "SYSERR: Null object passed to generate_loggable_representation().");
     mudlog(log_string, NULL, LOG_SYSLOG, TRUE);
     return str_dup(log_string);
   }

@@ -27,6 +27,7 @@
 #include "constants.h"
 #include "handler.h"
 #include "config.h"
+#include "string_safety.h"
 
 extern class memoryClass *Mem;
 
@@ -1128,7 +1129,7 @@ void redit_parse(struct descriptor_data * d, const char *arg)
     // What's displayed to you when you walk into the exit.
     DELETE_ARRAY_IF_EXTANT(DOOR->go_into_secondperson);
     if (*arg) {
-      strcpy(buf, arg);
+      STRCPY(buf, arg);
       delete_doubledollar(buf);
       DOOR->go_into_secondperson = str_dup(buf);
     }
@@ -1138,7 +1139,7 @@ void redit_parse(struct descriptor_data * d, const char *arg)
     // What's displayed to others when you walk into the exit.
     DELETE_ARRAY_IF_EXTANT(DOOR->go_into_thirdperson);
     if (arg && *arg) {
-      strcpy(buf, arg);
+      STRCPY(buf, arg);
       delete_doubledollar(buf);
       DOOR->go_into_thirdperson = str_dup(buf);
     }
@@ -1148,7 +1149,7 @@ void redit_parse(struct descriptor_data * d, const char *arg)
     // What's displayed when you walk out of the exit into the room.
     DELETE_ARRAY_IF_EXTANT(DOOR->come_out_of_thirdperson);
     if (*arg) {
-      strcpy(buf, arg);
+      STRCPY(buf, arg);
       delete_doubledollar(buf);
       DOOR->come_out_of_thirdperson = str_dup(buf);
     }

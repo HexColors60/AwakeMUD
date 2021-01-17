@@ -194,7 +194,7 @@ int  VTable::Parse(File *in)
     // now if we have a single line, just copy the rest of the line
     if (!multiline_input) {
       memset(field_ptr->line, 0, MAX_LINE_LENGTH);
-      strncpy(field_ptr->line, line_ptr, MAX_LINE_LENGTH);
+      strlcpy(field_ptr->line, line_ptr, MAX_LINE_LENGTH);
     } else {
       // otherwise use ReadString to get a '~'-terminated multiline string
       field_ptr->multiline = in->ReadString("(no section- vtable parse)");

@@ -13,6 +13,7 @@
 #include "memory.h"
 #include "newdb.h"
 #include "newmail.h"
+#include "string_safety.h"
 
 // Ensure we have enough space for the query cruft plus a fully-quoted mail.
 char mail_query_buf[300 + (MAX_MAIL_SIZE * 2 + 1)];
@@ -132,7 +133,7 @@ char *get_and_delete_one_message(struct char_data *ch, char *sender) {
           row[MAIL_SQL_TEXT]);
   
   // Fill out the sender field for the caller.
-  strcpy(sender, row[MAIL_SQL_SENDER_NAME]);
+  STRCPY(sender, row[MAIL_SQL_SENDER_NAME]);
   
   // Prepare the query for deleting the mail. Could have passed as a string, but atoi() guarantees no SQL shenanigans.
   snprintf(mail_query_buf, sizeof(mail_query_buf), "DELETE FROM pfiles_mail WHERE idnum = %d;", atoi(row[MAIL_SQL_IDNUM]));

@@ -27,6 +27,7 @@ using namespace std;
 #include "newmatrix.h"
 #include "newdb.h"
 #include "constants.h"
+#include "string_safety.h"
 
 /* extern variables */
 extern struct skill_data skills[];
@@ -41,7 +42,7 @@ ACMD_DECLARE(do_say);
 
 ACMD_CONST(do_say) {
   static char not_const[MAX_STRING_LENGTH];
-  strcpy(not_const, argument);
+  STRCPY(not_const, argument);
   do_say(ch, not_const, cmd, subcmd);
 }
 
@@ -93,7 +94,7 @@ ACMD(do_say)
     }
     if (subcmd == SCMD_SAYTO) {
       half_chop(argument, buf, buf2);
-      strcpy(argument, buf2);
+      STRCPY(argument, buf2);
       if (ch->in_veh)
         to = get_char_veh(ch, buf, ch->in_veh);
       else
@@ -680,7 +681,7 @@ ACMD(do_broadcast)
 
   success = success_test(GET_SKILL(ch, GET_LANGUAGE(ch)), 4);
 
-  strcpy(buf4, argument);
+  STRCPY(buf4, argument);
   // Starting at end of buf, work backwards and fuzz out the message.
   for (int len = strlen(buf4) - 1; len >= 0; len--)
     switch (number(0, 2)) {
@@ -693,7 +694,7 @@ ACMD(do_broadcast)
     }
   snprintf(buf3, MAX_STRING_LENGTH, "*static* %s", buf4);
   if (ROOM_FLAGGED(get_ch_in_room(ch), ROOM_NO_RADIO))
-    strcpy(argument, buf3);
+    STRCPY(argument, buf3);
 
   
   if ( frequency > 0 ) {
@@ -954,7 +955,7 @@ ACMD(do_gen_comm)
           else
             snprintf(buf, sizeof(buf), "%s$z shouts in a language you don't understand.", com_msgs[subcmd][3]);
         } else
-          strncpy(buf, "$z shouts incoherently.", sizeof(buf));
+          STRCPY(buf, "$z shouts incoherently.");
         if (IS_NPC(ch))
           snprintf(buf, sizeof(buf), "%s$z shouts, \"%s%s\"^n", com_msgs[subcmd][3], capitalize(argument), com_msgs[subcmd][3]);
         
@@ -1004,7 +1005,7 @@ ACMD(do_gen_comm)
               else
                 snprintf(buf, sizeof(buf), "%s$z shouts in a language you don't understand.", com_msgs[subcmd][3]);
             } else
-              strncpy(buf, "$z shouts incoherently.", sizeof(buf));
+              STRCPY(buf, "$z shouts incoherently.");
             if (IS_NPC(ch))
               snprintf(buf, sizeof(buf), "%s$z shouts, \"%s%s\"^n", com_msgs[subcmd][3], capitalize(argument), com_msgs[subcmd][3]);
             
@@ -1130,8 +1131,8 @@ ACMD(do_language)
       if ((GET_SKILL(ch, i)) > 0) {
         snprintf(buf, sizeof(buf), "%-20s %-17s", skills[i].name, how_good(i, GET_SKILL(ch, i)));
         if (GET_LANGUAGE(ch) == i)
-          strcat(buf, " ^Y(Speaking)^n");
-        strcat(buf, "\r\n");
+          STRCAT(buf, " ^Y(Speaking)^n");
+        STRCAT(buf, "\r\n");
         send_to_char(buf, ch);
       }
     return;

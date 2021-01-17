@@ -47,6 +47,7 @@
 #include "perfmon.h"
 #include "newmail.h"
 #include "transport.h"
+#include "string_safety.h"
 
 #if defined(__CYGWIN__)
 #include <crypt.h>
@@ -173,7 +174,7 @@ ACMD(do_copyover)
   }
   
   // Check for PCs on quests and people not in PLAYING state.  
-  strncpy(buf, "Characters currently on quests: ", sizeof(buf));
+  STRCPY(buf, "Characters currently on quests: ");
   int num_questors = 0;
   int fucky_states = 0;
   int cab_inhabitants = 0;
@@ -486,12 +487,12 @@ ACMD(do_echo)
                 // Check for visibility.
                 if (CAN_SEE(targ, vict)) {
                   if (found_mem(GET_MEMORY(targ), vict)) {
-                    strcpy(tmp_name, CAP(found_mem(GET_MEMORY(targ), vict)->mem));
+                    STRCPY(tmp_name, CAP(found_mem(GET_MEMORY(targ), vict)->mem));
                   } else {
-                    strcpy(tmp_name, GET_NAME(vict));
+                    STRCPY(tmp_name, GET_NAME(vict));
                   }
                 } else {
-                  strcpy(tmp_name, "someone");
+                  STRCPY(tmp_name, "someone");
                 }
               } // End of targ != vict
               else {
@@ -942,7 +943,7 @@ ACMD(do_teleport)
 ACMD(do_vnum)
 {
   argument = one_argument(argument, buf);
-  strcpy(buf2, argument);
+  STRCPY(buf2, argument);
 
   if (!*buf || !*buf2 || (!is_abbrev(buf, "mob") && !is_abbrev(buf, "obj") && !is_abbrev(buf, "veh"))) {
     send_to_char("Usage: vnum { obj | mob | veh } <name>\r\n", ch);
@@ -989,70 +990,64 @@ void do_stat_room(struct char_data * ch)
 
   if (rm->ex_description)
   {
-    strcpy(buf, "Extra descs:^c");
+    STRCPY(buf, "Extra descs:^c");
     for (desc = rm->ex_description; desc; desc = desc->next) {
-      strcat(buf, " ");
-      strcat(buf, desc->keyword);
+      STRCAT(buf, " ");
+      STRCAT(buf, desc->keyword);
     }
-    send_to_char(strcat(buf, "^n\r\n"), ch);
+    send_to_char(ch, "%s^n\r\n", buf);
   }
-  strcpy(buf, "Chars present:^y");
+  STRCPY(buf, "Chars present:^y");
   for (found = 0, k = rm->people; k; k = k->next_in_room)
   {
     if (!CAN_SEE(ch, k))
       continue;
     snprintf(buf2, sizeof(buf2), "%s %s(%s)", found++ ? "," : "", IS_NPC(k) ? GET_NAME(k) : GET_CHAR_NAME(k),
             (!IS_NPC(k) ? "PC" : (!IS_MOB(k) ? "NPC" : "MOB")));
-    strcat(buf, buf2);
+    STRCAT(buf, buf2);
     if (strlen(buf) >= 62) {
-      if (k->next_in_room)
-        send_to_char(strcat(buf, ",\r\n"), ch);
-      else
-        send_to_char(strcat(buf, "\r\n"), ch);
+      send_to_char(ch, "%s%s\r\n", buf, k->next_in_room ? "," : "");
       *buf = found = 0;
     }
   }
 
   if (*buf)
-    send_to_char(strcat(buf, "\r\n"), ch);
+    send_to_char(ch, "%s\r\n", buf);
 
   if (rm->contents)
   {
-    strcpy(buf, "Contents:^g");
+    STRCPY(buf, "Contents:^g");
     for (found = 0, j = rm->contents; j; j = j->next_content) {
       if (!CAN_SEE_OBJ(ch, j))
         continue;
       snprintf(buf2, sizeof(buf2), "%s %s", found++ ? "," : "", GET_OBJ_NAME(j));
-      strcat(buf, buf2);
+      STRCAT(buf, buf2);
       if (strlen(buf) >= 62) {
-        if (j->next_content)
-          send_to_char(strcat(buf, ",\r\n"), ch);
-        else
-          send_to_char(strcat(buf, "\r\n"), ch);
+        send_to_char(ch, "%s%s\r\n", buf, j->next_content ? "," : "");
         *buf = found = 0;
       }
     }
 
     if (*buf)
-      send_to_char(strcat(buf, "\r\n"), ch);
+      send_to_char(ch, "%s\r\n", buf);
   }
 
   for (i = 0; i < NUM_OF_DIRS; i++)
   {
     if (rm->dir_option[i]) {
       if (!rm->dir_option[i]->to_room)
-        strcpy(buf1, " ^cNONE^n");
+        STRCPY(buf1, " ^cNONE^n");
       else
         snprintf(buf1, sizeof(buf1), "^c%8ld^n", rm->dir_option[i]->to_room->number);
-      sprintbit(rm->dir_option[i]->exit_info, exit_bits, buf2);
+      sprintbit(rm->dir_option[i]->exit_info, exit_bits, buf2, sizeof(buf2));
       snprintf(buf, sizeof(buf), "Exit ^c%-5s^n:  To: [^c%s^n], Key: [^c%8ld^n], Keyword: "
               "^c%s^n, Type: ^c%s^n\r\n ", dirs[i], buf1, rm->dir_option[i]->key,
               rm->dir_option[i]->keyword ? rm->dir_option[i]->keyword : "None", buf2);
       send_to_char(buf, ch);
       if (rm->dir_option[i]->general_description)
-        strcpy(buf, rm->dir_option[i]->general_description);
+        STRCPY(buf, rm->dir_option[i]->general_description);
       else
-        strcpy(buf, "  No exit description.\r\n");
+        STRCPY(buf, "  No exit description.\r\n");
       send_to_char(buf, ch);
     }
   }
@@ -1077,7 +1072,7 @@ void do_stat_host(struct char_data *ch, struct host_data *host)
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%s%s (%d)", prev ? ", " : "", GET_CHAR_NAME(icon->decker->ch), icon->decker->tally);
       prev = TRUE;
     }
-  strcat(buf, "^n\r\n");
+  STRCAT(buf, "^n\r\n");
   send_to_char(buf, ch);
 }
 
@@ -1115,11 +1110,11 @@ void do_stat_object(struct char_data * ch, struct obj_data * j)
   if (GET_OBJ_RNUM(j) >= 0)
   {
     if (GET_OBJ_TYPE(j) == ITEM_WEAPON)
-      strcpy(buf2, (obj_index[GET_OBJ_RNUM(j)].wfunc ? "^cExists^n" : "None"));
+      STRCPY(buf2, (obj_index[GET_OBJ_RNUM(j)].wfunc ? "^cExists^n" : "None"));
     else
-      strcpy(buf2, (obj_index[GET_OBJ_RNUM(j)].func ? "^cExists^n" : "None"));
+      STRCPY(buf2, (obj_index[GET_OBJ_RNUM(j)].func ? "^cExists^n" : "None"));
   } else
-    strcpy(buf2, "None");
+    STRCPY(buf2, "None");
   snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "VNum: [^g%8ld^n], RNum: [%5ld], Type: %s, SpecProc: %s\r\n",
           virt, GET_OBJ_RNUM(j), buf1, buf2);
   snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "L-Des: %s\r\n",
@@ -1127,12 +1122,12 @@ void do_stat_object(struct char_data * ch, struct obj_data * j)
 
   if (j->ex_description)
   {
-    strcat(buf, "Extra descs:^c");
+    STRCAT(buf, "Extra descs:^c");
     for (desc = j->ex_description; desc; desc = desc->next) {
-      strcat(buf, " ");
-      strcat(buf, desc->keyword);
+      STRCAT(buf, " ");
+      STRCAT(buf, desc->keyword);
     }
-    strcat(buf, "\r\n");
+    STRCAT(buf, "\r\n");
   }
 
   j->obj_flags.wear_flags.PrintBits(buf2, MAX_STRING_LENGTH,
@@ -1150,30 +1145,30 @@ void do_stat_object(struct char_data * ch, struct obj_data * j)
   snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "Weight: %.2f, Value: %d, Timer: %d, Availability: %d/%.2f Days\r\n",
           GET_OBJ_WEIGHT(j), GET_OBJ_COST(j), GET_OBJ_TIMER(j), GET_OBJ_AVAILTN(j), GET_OBJ_AVAILDAY(j));
 
-  strcat(buf, "In room: ");
+  STRCAT(buf, "In room: ");
   if (!j->in_room)
-    strcat(buf, "Nowhere");
+    STRCAT(buf, "Nowhere");
   else
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld (IR %ld)", j->in_room->number, real_room(j->in_room->number));
-  strcat(buf, ", In object: ");
-  strcat(buf, j->in_obj ? j->in_obj->text.name : "None");
-  strcat(buf, ", Carried by: ");
+  STRCAT(buf, ", In object: ");
+  STRCAT(buf, j->in_obj ? j->in_obj->text.name : "None");
+  STRCAT(buf, ", Carried by: ");
   if (j->carried_by)
-    strcat(buf, GET_CHAR_NAME(j->carried_by));
+    STRCAT(buf, GET_CHAR_NAME(j->carried_by));
   else
-    strcat(buf, "Nobody");
-  strcat(buf, ", Worn by: ");
+    STRCAT(buf, "Nobody");
+  STRCAT(buf, ", Worn by: ");
   if (j->worn_by)
-    strcat(buf, GET_CHAR_NAME(j->worn_by) ? GET_CHAR_NAME(j->worn_by): "BROKEN");
+    STRCAT(buf, GET_CHAR_NAME(j->worn_by) ? GET_CHAR_NAME(j->worn_by): "BROKEN");
   else
-    strcat(buf, "Nobody");
-  strcat(buf, ", In vehicle: ");
+    STRCAT(buf, "Nobody");
+  STRCAT(buf, ", In vehicle: ");
   if (j->in_veh)
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%ld", j->in_veh->veh_number);
   else
-    strcat(buf, "None");
+    STRCAT(buf, "None");
 
-  strcat(buf, "\r\n");
+  STRCAT(buf, "\r\n");
 
   snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "Material: %s, Rating: %d, Condition: %d, Legality: %d%s-%s\r\n",
                material_names[(int)GET_OBJ_MATERIAL(j)], GET_OBJ_BARRIER(j),
@@ -1289,17 +1284,17 @@ void do_stat_object(struct char_data * ch, struct obj_data * j)
    */
   if (j->contains)
   {
-    strcat(buf, "\r\nContents:^g");
+    STRCAT(buf, "\r\nContents:^g");
     for (found = 0, j2 = j->contains; j2; j2 = j2->next_content) {
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%s %s", found++ ? "," : "", GET_OBJ_NAME(j2));
       if (strlen(buf) >= 62)
         if (j2->next_content)
-          strcat(buf, ",\r\n");
+          STRCAT(buf, ",\r\n");
     }
   }
-  strcat(buf, "^n\r\n");
+  STRCAT(buf, "^n\r\n");
   found = 0;
-  strcat(buf, "Affections:");
+  STRCAT(buf, "Affections:");
   for (i = 0; i < MAX_OBJ_AFFECT; i++)
     if (j->affected[i].modifier)
     {
@@ -1311,8 +1306,8 @@ void do_stat_object(struct char_data * ch, struct obj_data * j)
               j->affected[i].modifier, buf2);
     }
   if (!found)
-    strcat(buf, " None");
-  strcat(buf, "\r\n");
+    STRCAT(buf, " None");
+  STRCAT(buf, "\r\n");
   send_to_char(buf, ch);
 }
 
@@ -1336,16 +1331,16 @@ void do_stat_character(struct char_data * ch, struct char_data * k)
   switch (GET_SEX(k))
   {
   case SEX_NEUTRAL:
-    strcpy(buf, "NEUTRAL-SEX");
+    STRCPY(buf, "NEUTRAL-SEX");
     break;
   case SEX_MALE:
-    strcpy(buf, "MALE");
+    STRCPY(buf, "MALE");
     break;
   case SEX_FEMALE:
-    strcpy(buf, "FEMALE");
+    STRCPY(buf, "FEMALE");
     break;
   default:
-    strcpy(buf, "ILLEGAL-SEX!!");
+    STRCPY(buf, "ILLEGAL-SEX!!");
     break;
   }
 
@@ -1383,9 +1378,9 @@ void do_stat_character(struct char_data * ch, struct char_data * k)
     break;
   }
 
-  strcat(buf, ", Race: ");
+  STRCAT(buf, ", Race: ");
   sprinttype(k->player.race, pc_race_types, buf2, sizeof(buf2));
-  strcat(buf, buf2);
+  STRCAT(buf, buf2);
 
   if (IS_SENATOR(k))
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), ", Status: %s\r\n", status_ratings[(int)GET_LEVEL(k)]);
@@ -1393,8 +1388,8 @@ void do_stat_character(struct char_data * ch, struct char_data * k)
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), ", Status: Mortal \r\nRep: [^y%3d^n] Not: [^y%3d^n] TKE: [^y%3d^n]\r\n",
             GET_REP(k), GET_NOT(k), GET_TKE(k));
 
-  strcpy(buf1, (const char *) asctime(localtime(&(k->player.time.birth))));
-  strcpy(buf2, (const char *) asctime(localtime(&(k->player.time.lastdisc))));
+  STRCPY(buf1, (const char *) asctime(localtime(&(k->player.time.birth))));
+  STRCPY(buf2, (const char *) asctime(localtime(&(k->player.time.lastdisc))));
   buf1[10] = buf2[10] = '\0';
 
   snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "Created: [%s], Last Online: [%s], Played [%dh %dm]\r\n",
@@ -1442,14 +1437,14 @@ void do_stat_character(struct char_data * ch, struct char_data * k)
   if (k->desc)
   {
     sprinttype(k->desc->connected, connected_types, buf2, sizeof(buf2));
-    strcat(buf, ", Connected: ");
-    strcat(buf, buf2);
+    STRCAT(buf, ", Connected: ");
+    STRCAT(buf, buf2);
   }
-  strcat(buf, "\r\n");
+  STRCAT(buf, "\r\n");
 
-  strcat(buf, "Default position: ");
+  STRCAT(buf, "Default position: ");
   sprinttype((k->mob_specials.default_pos), position_types, buf2, sizeof(buf2));
-  strcat(buf, buf2);
+  STRCAT(buf, buf2);
 
   snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), ", Idle Timer: [%d]\r\n", k->char_specials.timer);
 
@@ -1485,10 +1480,10 @@ void do_stat_character(struct char_data * ch, struct char_data * k)
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%s %s", found++ ? "," : "", GET_CHAR_NAME(fol->follower));
     if (strlen(buf) >= 62) {
       if (fol->next)
-        strcat(buf, ",\r\n");
+        STRCAT(buf, ",\r\n");
     }
   }
-  strcat(buf, "\r\n");
+  STRCAT(buf, "\r\n");
 
   /* Showing the bitvector */
   AFF_FLAGS(k).PrintBits(buf2, MAX_STRING_LENGTH, affected_bits, AFF_MAX);
@@ -1513,16 +1508,16 @@ void do_stat_mobile(struct char_data * ch, struct char_data * k)
   switch (GET_SEX(k))
   {
   case SEX_NEUTRAL:
-    strcpy(buf, "NEUTRAL-SEX");
+    STRCPY(buf, "NEUTRAL-SEX");
     break;
   case SEX_MALE:
-    strcpy(buf, "MALE");
+    STRCPY(buf, "MALE");
     break;
   case SEX_FEMALE:
-    strcpy(buf, "FEMALE");
+    STRCPY(buf, "FEMALE");
     break;
   default:
-    strcpy(buf, "ILLEGAL-SEX!!");
+    STRCPY(buf, "ILLEGAL-SEX!!");
     break;
   }
   send_to_char(ch, "%s ", pc_race_types[(int)GET_RACE(k)]);
@@ -1532,7 +1527,7 @@ void do_stat_mobile(struct char_data * ch, struct char_data * k)
     snprintf(buf2, sizeof(buf2), " %s '%s', In veh [%s]\r\n", (!IS_MOB(k) ? "NPC" : "MOB"), GET_NAME(k), GET_VEH_NAME(k->in_veh));
   else
     snprintf(buf2, sizeof(buf2), " %s '%s'\r\n", (!IS_MOB(k) ? "NPC" : "MOB"), GET_NAME(k));
-  strcat(buf, buf2);
+  STRCAT(buf, buf2);
 
   snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "Alias: %s, VNum: [%8ld], RNum: [%5ld]\r\n", GET_KEYWORDS(k),
           GET_MOB_VNUM(k), GET_MOB_RNUM(k));
@@ -1568,16 +1563,16 @@ void do_stat_mobile(struct char_data * ch, struct char_data * k)
   snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "Position: %s, Fighting: %s", buf2,
           (FIGHTING(k) ? GET_NAME(FIGHTING(k)) : (FIGHTING_VEH(k) ? GET_VEH_NAME(FIGHTING_VEH(k)) : "Nobody")));
 
-  strcat(ENDOF(buf), ", Attack type: ");
+  STRCAT(buf, ", Attack type: ");
   // gotta subtract TYPE_HIT for the array to work properly
-  strcat(buf, attack_hit_text[k->mob_specials.attack_type - TYPE_HIT].singular);
-  strcat(buf, "\r\n");
+  STRCAT(buf, attack_hit_text[k->mob_specials.attack_type - TYPE_HIT].singular);
+  STRCAT(buf, "\r\n");
 
 
-  strcat(buf, "Default position: ");
+  STRCAT(buf, "Default position: ");
   sprinttype((k->mob_specials.default_pos), position_types, buf2, sizeof(buf2));
-  strcat(buf, buf2);
-  strcat(buf, "     Mob Spec-Proc: ");
+  STRCAT(buf, buf2);
+  STRCAT(buf, "     Mob Spec-Proc: ");
   if (mob_index[GET_MOB_RNUM(k)].func || mob_index[GET_MOB_RNUM(k)].sfunc)
   {
     int index;
@@ -1590,7 +1585,7 @@ void do_stat_mobile(struct char_data * ch, struct char_data * k)
       snprintf(buf2, sizeof(buf2), "%s\r\n", "^CExists^n");
   } else
     snprintf(buf2, sizeof(buf2), "None\r\n");
-  strcat(buf, buf2);
+  STRCAT(buf, buf2);
 
   MOB_FLAGS(k).PrintBits(buf2, MAX_STRING_LENGTH, action_bits, MOB_MAX);
   snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "NPC flags: ^c%s^n\r\n", buf2);
@@ -1617,10 +1612,10 @@ void do_stat_mobile(struct char_data * ch, struct char_data * k)
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%s %s", found++ ? "," : "", PERS(fol->follower, ch));
     if (strlen(buf) >= 62) {
       if (fol->next)
-        strcat(buf, ",\r\n");
+        STRCAT(buf, ",\r\n");
     }
   }
-  strcat(buf, "\r\n");
+  STRCAT(buf, "\r\n");
 
   /* Showing the bitvector */
   AFF_FLAGS(k).PrintBits(buf2, MAX_STRING_LENGTH, affected_bits, AFF_MAX);
@@ -3011,7 +3006,7 @@ ACMD(do_wizwho)
         snprintf(buf, sizeof(buf), " ^m(i%d)^n\r\n", GET_INVIS_LEV(d->character));
       else
         snprintf(buf, sizeof(buf), "\r\n");
-      strcat(line, buf);
+      STRCAT(line, buf);
       send_to_char(line, ch);
       immos++;
     }
@@ -3089,7 +3084,7 @@ ACMD(do_wiztitle)
     }
     skip_spaces(&argument);
     if (GET_LEVEL(ch) < LVL_BUILDER && *argument)
-      strcat(buf, "^n");
+      STRCAT(buf, "^n");
     if (strstr((const char *)argument, "^l")) {
       send_to_char("Whotitles can't contain pure black.\r\n", ch);
     } else if (strlen(argument) > (MAX_TITLE_LENGTH -2)) {
@@ -3165,7 +3160,7 @@ ACMD(do_wizutil)
         snprintf(buf, sizeof(buf), "Notitle %s for %s by %s.", ONOFF(result),
                 GET_CHAR_NAME(vict), GET_CHAR_NAME(ch));
         mudlog(buf, ch, LOG_WIZLOG, TRUE);
-        strcat(buf, "\r\n");
+        STRCAT(buf, "\r\n");
         send_to_char(buf, ch);
         break;
       case SCMD_SQUELCH:
@@ -3173,7 +3168,7 @@ ACMD(do_wizutil)
         snprintf(buf, sizeof(buf), "Squelch %s for %s by %s.", ONOFF(result),
                 GET_CHAR_NAME(vict), GET_CHAR_NAME(ch));
         mudlog(buf, ch, LOG_WIZLOG, TRUE);
-        strcat(buf, "\r\n");
+        STRCAT(buf, "\r\n");
         send_to_char(buf, ch);
         break;
       case SCMD_SQUELCHOOC:
@@ -3181,7 +3176,7 @@ ACMD(do_wizutil)
         snprintf(buf, sizeof(buf), "Squelch(OOC) %s for %s by %s.", ONOFF(result),
                 GET_CHAR_NAME(vict), GET_CHAR_NAME(ch));
         mudlog(buf, ch, LOG_WIZLOG, TRUE);
-        strcat(buf, "\r\n");
+        STRCAT(buf, "\r\n");
         send_to_char(buf, ch);
         break;
       case SCMD_RPE:
@@ -3275,7 +3270,7 @@ void print_zone_to_buf(char *bufptr, int buf_size, int zone, int detailed)
     snprintf(bufptr, buf_size - strlen(bufptr), "%3d %-30.30s^n ", zone_table[zone].number,
             zone_table[zone].name);
     for (i = 0; i < color; i++)
-      strcat(bufptr, " ");
+      STRCAT(bufptr, " ");
     snprintf(ENDOF(bufptr), buf_size - strlen(bufptr), "%sAge: %3d; Res: %3d (%1d); Top: %5d; Sec: %2d\r\n",
             zone_table[zone].connected ? "* " : "  ",
             zone_table[zone].age, zone_table[zone].lifespan,
@@ -3316,14 +3311,14 @@ void print_zone_to_buf(char *bufptr, int buf_size, int zone, int detailed)
         if (first)
           first = 0;
         else
-          strcat(bufptr, ", ");
-        strcat(bufptr, CAP(name));
+          STRCAT(bufptr, ", ");
+        STRCAT(bufptr, CAP(name));
       }
     }
     if (first)
-      strcat(bufptr, "None.\r\n");
+      STRCAT(bufptr, "None.\r\n");
     else
-      strcat(bufptr, ".\r\n");
+      STRCAT(bufptr, ".\r\n");
 */
   }
 }
@@ -3410,16 +3405,16 @@ ACMD(do_show)
   skip_spaces(&argument);
 
   if (!*argument) {
-    strcpy(buf, "Show options:\r\n");
+    STRCPY(buf, "Show options:\r\n");
     for (j = 0, i = 1; fields[i].level; i++)
       if (access_level(ch, fields[i].level))
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%-15s%s", fields[i].cmd, (!(++j % 5) ? "\r\n" : ""));
-    strcat(buf, "\r\n");
+    STRCAT(buf, "\r\n");
     send_to_char(buf, ch);
     return;
   }
 
-  strcpy(arg, two_arguments(argument, field, value));
+  STRCPY(arg, two_arguments(argument, field, value));
 
   for (l = 0; *(fields[l].cmd) != '\n'; l++)
     if (!strncmp(field, fields[l].cmd, strlen(field)))
@@ -3483,7 +3478,7 @@ ACMD(do_show)
               genders[(int) GET_SEX(vict)], GET_LEVEL(vict));
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "Y: %-8ld  Bal: %-8ld  Karma: %-8d\r\n",
               GET_NUYEN(vict), GET_BANK(vict), GET_KARMA(vict));
-      strcpy(birth, ctime(&vict->player.time.birth));
+      STRCPY(birth, ctime(&vict->player.time.birth));
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "Started: %-20.16s  Last: %-20.16s  Played: %3dh %2dm\r\n",
               birth, ctime(&vict->player.time.lastdisc),
               (int) (vict->player.time.played / 3600),
@@ -3536,7 +3531,7 @@ ACMD(do_show)
     send_to_char(buf, ch);
     break;
   case 5:
-    strcpy(buf, "Errant Rooms\r\n------------\r\n");
+    STRCPY(buf, "Errant Rooms\r\n------------\r\n");
     for (i = 0, k = 0; i <= top_of_world; i++)
       for (j = 0; j < NUM_OF_DIRS; j++)
         if (world[i].dir_option[j] && !world[i].dir_option[j]->to_room && i != last) {
@@ -3546,7 +3541,7 @@ ACMD(do_show)
     send_to_char(buf, ch);
     break;
   case 6:
-    strcpy(buf, "Death Traps\r\n-----------\r\n");
+    STRCPY(buf, "Death Traps\r\n-----------\r\n");
     for (i = 0, j = 0; i <= top_of_world; i++)
       if (ROOM_FLAGGED(&world[i], ROOM_DEATH))
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%2d: [%8ld] %s %s\r\n", ++j,
@@ -3558,7 +3553,7 @@ ACMD(do_show)
   case 7:
 #define GOD_ROOMS_ZONE 0
 
-    strcpy(buf, "Godrooms\r\n--------------------------\r\n");
+    STRCPY(buf, "Godrooms\r\n--------------------------\r\n");
     for (i = 0, j = 0; i <= zone_table[real_zone(GOD_ROOMS_ZONE)].top; i++)
       if (world[i].zone == GOD_ROOMS_ZONE && i > 1 && !(i >= 8 && i <= 12))
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%2d: [%8ld] %s %s\r\n", j++, world[i].number,
@@ -3585,7 +3580,7 @@ ACMD(do_show)
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "[%-20s%4d]", skills[i].name, GET_SKILL(vict, i));
         j++;
         if (!(j % 3))
-          strcat(buf, "\r\n");
+          STRCAT(buf, "\r\n");
       }
     send_to_char(buf, ch);
     send_to_char("\r\n", ch);
@@ -3636,7 +3631,7 @@ ACMD(do_show)
     send_to_char(ch, "%s's prompt:\r\n%s\r\n", GET_NAME(vict), GET_PROMPT(vict));
     break;
   case 13:
-    strcpy(buf, "Jackpoints\r\n---------\r\n");
+    STRCPY(buf, "Jackpoints\r\n---------\r\n");
     for (i = 0, j = 0; i <= top_of_world; i++)
       if (world[i].matrix > 0)
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%2d: [%8ld] %s^n (%ld/%ld)\r\n", ++j,
@@ -3664,18 +3659,18 @@ ACMD(do_show)
             snprintf(ENDOF(buf2), sizeof(buf2) - strlen(buf2), " %-8s", wound_name[MIN(4, GET_POWER_TOTAL(vict, i))]);
             if (GET_POWER_ACT(vict, i))
               snprintf(ENDOF(buf2), sizeof(buf2) - strlen(buf2), " ^Y(%-8s)^n", wound_name[MIN(4, GET_POWER_ACT(vict, i))]);
-            strcat(buf2, "\r\n");
+            STRCAT(buf2, "\r\n");
             break;
           default:
             snprintf(ENDOF(buf2), sizeof(buf2) - strlen(buf2), " +%d", GET_POWER_TOTAL(vict, i));
             if (GET_POWER_ACT(vict, i))
               snprintf(ENDOF(buf2), sizeof(buf2) - strlen(buf2), " ^Y(%d)^n", GET_POWER_ACT(vict, i)); 
-            strcat(buf2, "\r\n");
+            STRCAT(buf2, "\r\n");
             break;
           }
         else
-          strcat(buf2, "\r\n");
-        strcat(buf, buf2);
+          STRCAT(buf2, "\r\n");
+        STRCAT(buf, buf2);
       }
     }
     send_to_char(buf, ch);
@@ -3718,7 +3713,7 @@ ACMD(do_show)
     send_to_char("\r\n", ch);
     break;
   case 17:
-    strcpy(buf, "Exitless Rooms\r\n-----------\r\n");
+    STRCPY(buf, "Exitless Rooms\r\n-----------\r\n");
     for (i = 0, j = 0; i <= top_of_world; i++) {
       // Don't need to hear about the imm zones.
       if (!room_has_any_exits(&world[i])) {
@@ -3731,7 +3726,7 @@ ACMD(do_show)
     send_to_char(buf, ch);
     break;
   case 18:
-    strcpy(buf, "Trap Rooms\r\n-----------\r\n");
+    STRCPY(buf, "Trap Rooms\r\n-----------\r\n");
     int dir;
     for (i = 0, j = 0; i <= top_of_world; i++) {      
       for (dir = 0; dir <= DOWN; dir++) {
@@ -3763,7 +3758,7 @@ ACMD(do_show)
     display_pockets_to_char(ch, vict);
     break;
   case 20:
-    strcpy(buf, "Storage Rooms\r\n-----------\r\n");
+    STRCPY(buf, "Storage Rooms\r\n-----------\r\n");
     for (i = 0, j = 0; i <= top_of_world; i++)
       if (ROOM_FLAGGED(&world[i], ROOM_STORAGE))
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%4d: [%8ld] %s %s\r\n", ++j,
@@ -3822,7 +3817,7 @@ ACMD(do_show)
       
       // Flag mobs with no stats
       if (total_stats == 0) {
-        strncat(buf, " has not had its attributes set yet", sizeof(buf) - strlen(buf) - 1);
+        STRCAT(buf, " has not had its attributes set yet");
         printed = TRUE;
       }
       
@@ -3862,7 +3857,7 @@ ACMD(do_show)
       for (i = 0; i < ROOM_MAX; i++) {
         if (str_str(room_bits[i], value)) {
           send_to_char(ch, "Rooms with flag %s set:\r\n", room_bits[i]);
-          strcpy(buf, "Exitless Rooms\r\n-----------\r\n");
+          STRCPY(buf, "Exitless Rooms\r\n-----------\r\n");
           for (k = 0, j = 0; k <= top_of_world; k++)
             if (ROOM_FLAGGED(&world[k], i))
               send_to_char(ch, "%4d: [%8ld] %s %s\r\n", ++j,
@@ -4078,7 +4073,7 @@ ACMD(do_set)
     half_chop(buf, name, buf);
   }
   half_chop(buf, field, buf2);
-  strcpy(val_arg, buf2);
+  STRCPY(val_arg, buf2);
 
   if (!*name || !*field) {
     send_to_char("Usage: set <victim> <field> <value>\r\n", ch);
@@ -4165,7 +4160,7 @@ ACMD(do_set)
     snprintf(buf, sizeof(buf),"%s set %s -> %s.",GET_CHAR_NAME(ch),vict?GET_CHAR_NAME(vict):"", argument);
   mudlog(buf, ch, LOG_WIZLOG, TRUE );
 
-  strcpy(buf, "Okay.");  /* can't use OK macro here 'cause of \r\n */
+  STRCPY(buf, "Okay.");  /* can't use OK macro here 'cause of \r\n */
   switch (l) {
   case 0:
     SET_OR_REMOVE(PRF_FLAGS(vict), PRF_CONNLOG);
@@ -4421,7 +4416,7 @@ ACMD(do_set)
       } else
         snprintf(buf, sizeof(buf), "That room does not exist!");
     } else
-      strcpy(buf, "Must be 'off' or a room's virtual number.\r\n");
+      STRCPY(buf, "Must be 'off' or a room's virtual number.\r\n");
     break;
   case 38:
     if (GET_IDNUM(ch) != 1 || !IS_NPC(vict)) {
@@ -4508,7 +4503,7 @@ ACMD(do_set)
       SET_CLEANUP(false);
       return;
     }
-    RANGE(0, 53);
+    RANGE(0, NUM_TOTEMS - 1);
     GET_TOTEM(vict) = value;
     break;
   case 48:
@@ -4635,7 +4630,7 @@ ACMD(do_set)
   } else if (fields[l].type == NUMBER) {
     snprintf(buf, sizeof(buf), "%s's %s set to %d.\r\n", GET_NAME(vict), fields[l].cmd, value);
   } else
-    strcat(buf, "\r\n");
+    STRCAT(buf, "\r\n");
   send_to_char(CAP(buf), ch);
 
   if (is_file) {
@@ -4650,7 +4645,7 @@ ACMD(do_logwatch)
   
   /*    Code that needs to be finished in the future. Has mistaken assumptions in it. -LS
   if (!*buf) {
-    strncpy(buf, "You are currently watching the following:\r\n", sizeof(buf));
+    STRCPY(buf, "You are currently watching the following:\r\n");
     for (int i = 0; i < NUM_LOGS; i++)
       if (PRF_FLAGGED(ch, i))
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "  %s\r\n", log_types[i]);
@@ -5491,7 +5486,7 @@ ACMD(do_tail)
       lines = atoi( arg );
       if ( lines < 0 )
         lines = 0 - lines;
-      // strcpy( arg, buf );
+      // STRCPY( arg, buf );
     }
     
     // Only allow letters, periods, numbers, and dashes.
@@ -5511,7 +5506,7 @@ ACMD(do_tail)
   out=popen( arg, "r");
 
   while (fgets(buf, MAX_STRING_LENGTH-5, out) != NULL) {
-    strcat(buf,"\r");
+    STRCAT(buf,"\r");
     send_to_char( buf, ch );
   }
   fclose( out );
@@ -5905,26 +5900,26 @@ int audit_zone_rooms(struct char_data *ch, int zone_num, bool verbose) {
     
     // Check its strings.
     if (!strcmp(GET_ROOM_NAME(room), STRING_ROOM_TITLE_UNFINISHED)) {
-      strncat(buf, "  - Default room title used. This room will NOT be saved in the world files.\r\n", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "  - Default room title used. This room will NOT be saved in the world files.\r\n");
       issues++;
       printed = TRUE;
     }
     
     if (!strcmp(GET_ROOM_DESC(room), STRING_ROOM_DESC_UNFINISHED)) {
-      strncat(buf, "  - Default room desc used.\r\n", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "  - Default room desc used.\r\n");
       issues++;
       printed = TRUE;
     }
     
     if (room->matrix > 0) {
       if (real_host(room->matrix) < 1) {
-        strncat(buf, "  - Invalid Matrix host specified.\r\n", sizeof(buf) - strlen(buf) - 1);
+        STRCAT(buf, "  - Invalid Matrix host specified.\r\n");
         issues++;
         printed = TRUE;
       }
       
       if (!strcmp(room->address, STRING_ROOM_JACKPOINT_NO_ADDR)) {
-        strncat(buf, "  - Default jackpoint address used.\r\n", sizeof(buf) - strlen(buf) - 1);
+        STRCAT(buf, "  - Default jackpoint address used.\r\n");
         issues++;
         printed = TRUE;
       }
@@ -5932,32 +5927,32 @@ int audit_zone_rooms(struct char_data *ch, int zone_num, bool verbose) {
     
     // Check its flags.
     if (ROOM_FLAGGED(room, ROOM_ENCOURAGE_CONGREGATION)) {
-      strncat(buf, "  - Socialization flag is set.\r\n", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "  - Socialization flag is set.\r\n");
       issues++;
       printed = TRUE;
     }
     
     if (ROOM_FLAGGED(room, ROOM_NOMAGIC)) {
-      strncat(buf, "  - !magic flag is set.\r\n", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "  - !magic flag is set.\r\n");
       issues++;
       printed = TRUE;
     }
     
     if (ROOM_FLAGGED(room, ROOM_ARENA)) {
-      strncat(buf, "  - Arena flag is set.\r\n", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "  - Arena flag is set.\r\n");
       issues++;
       printed = TRUE;
     }
     
     // Staff-only is allowed in the staff HQ area. Otherwise, flag it.
     if ((GET_ROOM_VNUM(room) < 10000 || GET_ROOM_VNUM(room) > 10099) && ROOM_FLAGGED(room, ROOM_STAFF_ONLY)) {
-      strncat(buf, "  - Staff-only flag is set.\r\n", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "  - Staff-only flag is set.\r\n");
       issues++;
       printed = TRUE;
     }
     
     if (ROOM_FLAGS(room).AreAnySet(ROOM_HOUSE_CRASH, ROOM_BFS_MARK, ROOM_OLC, ROOM_NOQUIT, ROOM_ASTRAL, ENDBIT)) {
-      strncat(buf, "  - System-controlled or unimplemented flags are set.\r\n", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "  - System-controlled or unimplemented flags are set.\r\n");
       issues++;
       printed = TRUE;
     }
@@ -6081,7 +6076,7 @@ int audit_zone_mobs(struct char_data *ch, int zone_num, bool verbose) {
     
     // Flag mobs with no stats
     if (total_stats == 0) {
-      strncat(buf, "  - has not had its attributes set yet.\r\n", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "  - has not had its attributes set yet.\r\n");
       printed = TRUE;
       issues++;
     }

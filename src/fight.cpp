@@ -20,6 +20,7 @@
 #include "memory.h"
 #include "newmatrix.h"
 #include "newmagic.h"
+#include "string_safety.h"
 
 /* Structures */
 struct char_data *combat_list = NULL;   /* head of l-list of fighting chars */
@@ -307,7 +308,7 @@ void set_fighting(struct char_data * ch, struct char_data * vict, ...)
   AFF_FLAGS(ch).RemoveBit(AFF_BANISH);
   AFF_FLAGS(vict).RemoveBit(AFF_BANISH);
   
-  strcpy(buf, GET_CHAR_NAME(ch));
+  STRCPY(buf, GET_CHAR_NAME(ch));
   
   if (!ch->in_veh) {
     if (ch->followers)
@@ -346,9 +347,9 @@ void set_fighting(struct char_data * ch, struct veh_data * vict)
     draw_weapon(ch);
   
   if (IS_NPC(ch))
-    strcpy(buf, GET_NAME(ch));
+    STRCPY(buf, GET_NAME(ch));
   else
-    strcpy(buf, GET_CHAR_NAME(ch));
+    STRCPY(buf, GET_CHAR_NAME(ch));
   if (ch->followers)
     for (k = ch->followers; k; k = k->next)
       if (PRF_FLAGGED(k->follower, PRF_ASSIST) && k->follower->in_room == ch->in_room &&
@@ -1002,20 +1003,20 @@ void dam_message(int dam, struct char_data * ch, struct char_data * victim, int 
   
   
   /* damage message to damager */
-  strcpy(buf1, "^y");
+  STRCPY(buf1, "^y");
   buf = replace_string(dam_weapons[msgnum].to_char,
                        attack_hit_text[w_type].singular, attack_hit_text[w_type].plural,
                        attack_hit_text[w_type].different);
-  strcat(buf1, buf);
+  STRCAT(buf1, buf);
   if (SENDOK(ch))
     perform_act(buf1, ch, NULL, victim, ch);
   
   /* damage message to damagee */
-  strcpy(buf1, "^r");
+  STRCPY(buf1, "^r");
   buf = replace_string(dam_weapons[msgnum].to_victim,
                        attack_hit_text[w_type].singular, attack_hit_text[w_type].plural,
                        attack_hit_text[w_type].different);
-  strcat(buf1, buf);
+  STRCAT(buf1, buf);
   act(buf1, FALSE, ch, NULL, victim, TO_VICT | TO_SLEEP);
 }
 #undef SENDOK
@@ -2273,7 +2274,7 @@ bool damage(struct char_data *ch, struct char_data *victim, int dam, int attackt
     buf_mod(rbuf, sizeof(rbuf), "ImmExplode",dam);
   }
   if (dam == 0)
-    strcat(rbuf, " 0");
+    STRCAT(rbuf, " 0");
   else if (dam > 0)
     buf_mod(rbuf, sizeof(rbuf), "", dam);
   
@@ -3020,15 +3021,15 @@ void combat_message(struct char_data *ch, struct char_data *victim, struct obj_d
   
   if (burst <= 1) {
     if (GET_OBJ_VAL(weapon, 4) == SKILL_SHOTGUNS || GET_OBJ_VAL(weapon, 4) == SKILL_ASSAULT_CANNON)
-      strcpy(buf, "single shell from $p");
+      STRCPY(buf, "single shell from $p");
     else
-      strcpy(buf, "single round from $p");
+      STRCPY(buf, "single round from $p");
   } else if (burst == 2) {
-    strcpy(buf, "short burst from $p");
+    STRCPY(buf, "short burst from $p");
   } else if (burst == 3) {
-    strcpy(buf, "burst from $p");
+    STRCPY(buf, "burst from $p");
   } else {
-    strcpy(buf, "long burst from $p");
+    STRCPY(buf, "long burst from $p");
   }
   ch_room = get_ch_in_room(ch);
   vict_room = get_ch_in_room(victim);
@@ -3039,7 +3040,7 @@ void combat_message(struct char_data *ch, struct char_data *victim, struct obj_d
     if (ch->in_veh)
       snprintf(vehicle_message, sizeof(vehicle_message), "From inside %s, ", decapitalize_a_an(GET_VEH_NAME(ch->in_veh)));
     else
-      strcpy(vehicle_message, "");
+      STRCPY(vehicle_message, "");
     
     if (damage < 0) {
       switch (number(1, 3)) {
@@ -3213,12 +3214,12 @@ void combat_message(struct char_data *ch, struct char_data *victim, struct obj_d
         // Special case: If they're using a suppressed weapon, print a muffled-gunfire message and terminate.
         send_to_room("You hear muffled gunshots nearby.\r\n", &world[room1]);
         combat_message_process_ranged_response(ch, room1);
-        strcat(been_heard, temp);
+        STRCAT(been_heard, temp);
       } else {
         // Send gunshot notifications to the selected room. Process guard/helper responses.
         send_to_room("You hear gunshots nearby!\r\n", &world[room1]);
         combat_message_process_ranged_response(ch, room1);
-        strcat(been_heard, temp);
+        STRCAT(been_heard, temp);
         
         // Add the room's exits to the list.
         for (int door2 = 0; door2 < NUM_OF_DIRS; door2++)
@@ -3242,7 +3243,7 @@ void combat_message(struct char_data *ch, struct char_data *victim, struct obj_d
     
     send_to_room("You hear gunshots not far off.\r\n", &world[room1]);
     combat_message_process_ranged_response(ch, room1);
-    strcat(been_heard, temp);
+    STRCAT(been_heard, temp);
     
     // Add the room's exits to the list.
     for (int door = 0; door < NUM_OF_DIRS; door++)
@@ -3262,7 +3263,7 @@ void combat_message(struct char_data *ch, struct char_data *victim, struct obj_d
     
     send_to_room("You hear gunshots in the distance.\r\n", &world[room1]);
     combat_message_process_ranged_response(ch, room1);
-    strcat(been_heard, temp);
+    STRCAT(been_heard, temp);
   }
 }
 
@@ -3582,7 +3583,7 @@ void hit(struct char_data *attacker, struct char_data *victim, struct obj_data *
     }
     
     if (GET_QUI(def->ch) <= 0) {
-      strncat(rbuf, "-- but we're zeroing out successes since the defender is paralyzed.", sizeof(rbuf) - strlen(rbuf) - 1);
+      STRCAT(rbuf, "-- but we're zeroing out successes since the defender is paralyzed.");
       att->successes = 0;
     }
     else {
@@ -5451,7 +5452,7 @@ void vram(struct veh_data * veh, struct char_data * ch, struct veh_data * tveh)
     
     snprintf(buf, sizeof(buf), "You ram a %s!\r\n", GET_VEH_NAME(tveh));
     snprintf(buf1, sizeof(buf1), "%s rams straight into your ride!\r\n", GET_VEH_NAME(veh));
-    strcpy(buf3, GET_VEH_NAME(veh));
+    STRCPY(buf3, GET_VEH_NAME(veh));
     snprintf(buf2, sizeof(buf2), "%s rams straight into %s!\r\n", buf3, GET_VEH_NAME(tveh));
     send_to_veh(buf, veh, NULL, TRUE);
     send_to_veh(buf1, tveh, NULL, TRUE);
@@ -5575,7 +5576,7 @@ void vcombat(struct char_data * ch, struct veh_data * veh)
   } else
   {
     power = GET_STR(ch);
-    strcpy(ammo_type, "blow");
+    STRCPY(ammo_type, "blow");
     /*
     for (obj = ch->cyberware;
          obj && !damage_total;

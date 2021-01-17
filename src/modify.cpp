@@ -31,6 +31,7 @@
 #include "newdb.h"
 #include "helpedit.h"
 #include "config.h"
+#include "string_safety.h"
 
 #define DO_FORMAT_INDENT   1
 #define DONT_FORMAT_INDENT 0
@@ -181,7 +182,7 @@ void string_add(struct descriptor_data *d, char *str)
       terminator = 1;
     }
     *d->str = new char[strlen(str) + 3];
-    strcpy(*d->str, str);
+    STRCPY(*d->str, str);
   } else
   {
     if (strlen(str) + strlen(*d->str) > (u_int)d->max_str) {
@@ -194,8 +195,8 @@ void string_add(struct descriptor_data *d, char *str)
         shutdown();
         ;
       }
-      strcpy(temp, *d->str);
-      strcat(temp, str);
+      STRCPY(temp, *d->str);
+      STRCAT(temp, str);
       delete [] *d->str;
       *d->str = temp;
     }
@@ -452,8 +453,8 @@ void string_add(struct descriptor_data *d, char *str)
         perror("string_add");
         shutdown();
       }
-      strcpy (ptr, *d->str);
-      strcat(ptr, tmp);
+      STRCPY (ptr, *d->str);
+      STRCAT(ptr, tmp);
       delete [] *d->str;
       *d->str = ptr;
       Board_save_board(d->mail_to - BOARD_MAGIC);
@@ -466,7 +467,7 @@ void string_add(struct descriptor_data *d, char *str)
   } else {
     // Only add a newline if it's not just /**/ with nothing else in it.
     if (strcmp(*d->str, "/**/") != 0)
-      strcat(*d->str, "\r\n");
+      STRCAT(*d->str, "\r\n");
   }
 }
 
@@ -485,13 +486,13 @@ ACMD(do_spellset)
 
   if (!*name) {                 /* no arguments. print an informative text */
     send_to_char("Syntax: spellset <name> '<spell>' <force>\r\n", ch);
-    strcpy(help, "Spell being one of the following:\r\n");
+    STRCPY(help, "Spell being one of the following:\r\n");
     for ( i = 0; i < MAX_SPELLS; i++) {
       if (*spells[i].name == '!')
         continue;
       snprintf(ENDOF(help), sizeof(help) - strlen(help), "%18s", spells[i].name);
       if (i % 4 == 3) {
-        strcat(help, "\r\n");
+        STRCAT(help, "\r\n");
         send_to_char(help, ch);
         *help = '\0';
       }
@@ -539,7 +540,7 @@ ACMD(do_spellset)
     send_to_char("Skill must be enclosed in: ''\r\n", ch);
     return;
   }
-  strcpy(help, (argument + 1));
+  STRCPY(help, (argument + 1));
   help[qend - 1] = '\0';
   if ((spelltoset = find_spell_num(help)) <= 0) {
     send_to_char("Unrecognized spell.\r\n", ch);
@@ -566,7 +567,7 @@ ACMD(do_spellset)
   }
   
   int subtype = 0;
-  strcpy(buf, spells[spelltoset].name);
+  STRCPY(buf, spells[spelltoset].name);
   // Require that the attribute spells have an attribute specified (see spell->subtype comment).
   if (spelltoset == SPELL_INCATTR || spelltoset == SPELL_INCCYATTR ||
       spelltoset == SPELL_DECATTR || spelltoset == SPELL_DECCYATTR) {
@@ -638,13 +639,13 @@ ACMD(do_skillset)
 
   if (!*name) {                 /* no arguments. print an informative text */
     send_to_char("Syntax: skillset <name> '<skill>' <value>\r\n", ch);
-    strcpy(help, "Skill being one of the following:\r\n");
+    STRCPY(help, "Skill being one of the following:\r\n");
     for (i = 0; i < MAX_SKILLS; i++) {
       if (*skills[i].name == '!')
         continue;
       snprintf(ENDOF(help), sizeof(help) - strlen(help), "%18s", skills[i].name);
       if (i % 4 == 3 || PRF_FLAGGED(ch, PRF_SCREENREADER)) {
-        strcat(help, "\r\n");
+        STRCAT(help, "\r\n");
         send_to_char(help, ch);
         *help = '\0';
       }
@@ -678,7 +679,7 @@ ACMD(do_skillset)
     send_to_char("Skill must be enclosed in: ''\r\n", ch);
     return;
   }
-  strcpy(help, (argument + 1));
+  STRCPY(help, (argument + 1));
   help[qend - 1] = '\0';
   if ((skill = find_skill_num(help)) <= 0) {
     send_to_char("Unrecognized skill.\r\n", ch);
@@ -764,7 +765,7 @@ void page_string(struct descriptor_data *d, char *str, int keep_internal)
   {
     DELETE_ARRAY_IF_EXTANT(d->showstr_head);
     d->showstr_head = new char[strlen(str) + 1];
-    strcpy(d->showstr_head, str);
+    STRCPY(d->showstr_head, str);
     d->showstr_point = d->showstr_head;
   } else
     d->showstr_point = str;

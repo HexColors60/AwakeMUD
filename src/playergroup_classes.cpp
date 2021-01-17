@@ -20,6 +20,7 @@
 #include "olc.h"
 #include "handler.h"
 #include "comm.h"
+#include "string_safety.h"
 
 // The linked list of loaded playergroups.
 extern Playergroup *loaded_playergroups;
@@ -182,7 +183,7 @@ bool Playergroup::alias_is_in_use(const char *alias) {
   char querybuf[1000];
   
   // Clone over alias to the new local version. This way we can state conclusively the size of the buffer that contains it-- crucial for prepare_quotes.
-  strcpy(local_alias, alias);
+  STRCPY(local_alias, alias);
   
   // Compose and execute our query.
   snprintf(querybuf, sizeof(querybuf), "SELECT idnum FROM playergroups WHERE alias = '%s'", prepare_quotes(buf, alias, sizeof(local_alias) / sizeof(local_alias[0])));
@@ -306,7 +307,7 @@ void Playergroup::secret_log_vfprintf(const char *format, ...)
 
 const char *Playergroup::render_settings() {
   static char settings_string[100];
-  strcpy(settings_string, "");
+  STRCPY(settings_string, "");
   bool is_first = TRUE;
   
   for (int index = 0; index < NUM_PGROUP_SETTINGS; index++) {
@@ -316,7 +317,7 @@ const char *Playergroup::render_settings() {
     }
   }
   if (is_first)
-    strcpy(settings_string, "(none)");
+    STRCPY(settings_string, "(none)");
   
   return settings_string;
 }
@@ -446,7 +447,7 @@ void Playergroup::invite(struct char_data *ch, char *argument) {
       temp = temp->next;
     }
     
-    strcpy(buf, "You invite $N to join your group.");
+    STRCPY(buf, "You invite $N to join your group.");
     act(buf, FALSE, ch, NULL, target, TO_CHAR);
     snprintf(buf, MAX_STRING_LENGTH, "$n has invited you to join their playergroup, '%s'. You can ACCEPT or DECLINE this at any time in the next %d days.", get_name(), PGROUP_INVITATION_LIFETIME_IN_DAYS);
     act(buf, FALSE, ch, NULL, target, TO_VICT);

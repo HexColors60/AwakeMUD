@@ -22,6 +22,7 @@
 #include "awake.h"
 #include "constants.h"
 #include "newmatrix.h"
+#include "string_safety.h"
 
 /* extern variables */
 extern int drink_aff[][3];
@@ -1869,13 +1870,13 @@ void name_from_drinkcon(struct obj_data *obj)
 
   temp = get_token(obj->text.keywords, token);
 
-  buf2[0] = '\0'; // so strcats will start at the beginning
+  buf2[0] = '\0'; // so STRCATs will start at the beginning
 
   int i = 0;
   while (*token && strcasecmp(token, drinks[GET_OBJ_VAL(obj, 2)]))
   {
-    strcat(buf2, token);
-    strcat(buf2, " ");
+    STRCAT(buf2, token);
+    STRCAT(buf2, " ");
     temp = get_token(temp, token);
     ++i;
   }
@@ -1887,7 +1888,7 @@ void name_from_drinkcon(struct obj_data *obj)
 
   // now, we copy the remaining string onto the end of buf2
   if (temp)
-    strcat(buf2, temp);
+    STRCAT(buf2, temp);
 
   buf2[strlen(buf2)] = '\0'; // remove the trailing space
 
@@ -2939,12 +2940,12 @@ ACMD(do_activate)
     char name[120], tokens[MAX_STRING_LENGTH], *s;
     extern int ability_cost(int abil, int level);
     int x;
-    strncpy(tokens, argument, sizeof(tokens) - 1);
+    STRCPY(tokens, argument);
     if (strtok(tokens, "\"") && (s = strtok(NULL, "\""))) {
-      strncpy(name, s, sizeof(name) - 1);
+      STRCPY(name, s);
       if ((s = strtok(NULL, "\0"))) {
         skip_spaces(&s);
-        strncpy(buf1, s, sizeof(buf1) - 1);
+        STRCPY(buf1, s);
       } else
         *buf1 = '\0';
       one_argument(argument, buf);
@@ -2952,10 +2953,10 @@ ACMD(do_activate)
     } else {
       half_chop(argument, buf, buf1);
       if (!(x = atoi(buf))) {
-        strncpy(name, buf, sizeof(name) - 1);
+        STRCPY(name, buf);
       } else {
         half_chop(buf1, buf2, buf1);
-        strncpy(name, buf2, sizeof(name) - 1);
+        STRCPY(name, buf2);
       }
     }
 

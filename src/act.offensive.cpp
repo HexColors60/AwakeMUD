@@ -20,6 +20,7 @@
 #include "newmagic.h"
 #include "awake.h"
 #include "constants.h"
+#include "string_safety.h"
 
 /* extern variables */
 extern struct room_data *world;
@@ -361,7 +362,7 @@ bool perform_hit(struct char_data *ch, char *argument, const char *cmdname)
       }
     } else if (FIGHTING(ch) && vict != FIGHTING(ch)) {
       char name[80];
-      strcpy(name, GET_NAME(FIGHTING(ch)));
+      STRCPY(name, GET_NAME(FIGHTING(ch)));
       stop_fighting(ch);
       set_fighting(ch, vict);
       if (!CH_IN_COMBAT(vict) && AWAKE(vict))

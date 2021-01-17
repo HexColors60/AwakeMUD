@@ -39,6 +39,7 @@ using namespace std;
 #include "newdb.h"
 #include "bullet_pants.h"
 #include "config.h"
+#include "string_safety.h"
 
 const char *CCHAR;
 
@@ -117,22 +118,22 @@ char *make_desc(struct char_data *ch, struct char_data *i, char *buf, int act, b
     snprintf(buf, sizeof(buf), "%s", dont_capitalize_a_an ? "a" : "A");
     if (conceal > 0) {
       if (GET_HEIGHT(i) < 130)
-        strcat(buf, " tiny");
+        STRCAT(buf, " tiny");
       else if (GET_HEIGHT(i) < 160)
-        strcat(buf, " small");
+        STRCAT(buf, " small");
       else if (GET_HEIGHT(i) < 190)
-        strcat(buf, "n average");
+        STRCAT(buf, "n average");
       else if (GET_HEIGHT(i) < 220)
-        strcat(buf, " large");
+        STRCAT(buf, " large");
       else
-        strcat(buf, " huge");
+        STRCAT(buf, " huge");
     }
     if (conceal > 2)
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " %s", genders[(int)GET_SEX(i)]);
     if (conceal > 3)
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " %s", pc_race_types[(int)GET_RACE(i)]);
     else
-      strcat(buf, " person");
+      STRCAT(buf, " person");
     if (GET_EQ(i, WEAR_ABOUT))
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " wearing %s", decapitalize_a_an(GET_OBJ_NAME(GET_EQ(i, WEAR_ABOUT))));
     else if (GET_EQ(i, WEAR_BODY))
@@ -143,21 +144,21 @@ char *make_desc(struct char_data *ch, struct char_data *i, char *buf, int act, b
   {
     struct remem *mem;
     if (!act) {
-      strcpy(buf, dont_capitalize_a_an ? decapitalize_a_an(CAP(GET_NAME(i))) : CAP(GET_NAME(i)));
+      STRCPY(buf, dont_capitalize_a_an ? decapitalize_a_an(CAP(GET_NAME(i))) : CAP(GET_NAME(i)));
       if (IS_SENATOR(ch) && !IS_NPC(i))
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " (%s)", CAP(GET_CHAR_NAME(i)));
       else if ((mem = found_mem(GET_MEMORY(ch), i)))
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " (%s)", CAP(mem->mem));
     } else if ((mem = found_mem(GET_MEMORY(ch), i)) && act != 2)
-      strcpy(buf, CAP(mem->mem));
+      STRCPY(buf, CAP(mem->mem));
     else
-      strcpy(buf, dont_capitalize_a_an ? decapitalize_a_an(CAP(GET_NAME(i))) : CAP(GET_NAME(i)));
+      STRCPY(buf, dont_capitalize_a_an ? decapitalize_a_an(CAP(GET_NAME(i))) : CAP(GET_NAME(i)));
   }
   if (GET_SUSTAINED(i) && (IS_ASTRAL(ch) || IS_DUAL(ch)))
   {
     for (struct sustain_data *sust = GET_SUSTAINED(i); sust; sust = sust->next)
       if (!sust->caster) {
-        strcat(buf, ", surrounded by a spell aura");
+        STRCAT(buf, ", surrounded by a spell aura");
         break;
       }
   }
@@ -168,7 +169,7 @@ char *make_desc(struct char_data *ch, struct char_data *i, char *buf, int act, b
   if (AFF_FLAGGED(i, AFF_MANIFEST) && !(IS_ASTRAL(ch) || IS_DUAL(ch)))
   {
     snprintf(buf2, sizeof(buf2), "The ghostly image of %s", buf);
-    strcpy(buf, buf2);
+    STRCPY(buf, buf2);
   }
   return buf;
 }
@@ -184,20 +185,20 @@ void get_obj_condition(struct char_data *ch, struct obj_data *obj)
   int condition = GET_OBJ_CONDITION(obj) * 100 / MAX(1, GET_OBJ_BARRIER(obj));
   snprintf(buf2, sizeof(buf2), "%s is ", CAP(GET_OBJ_NAME(obj)));
   if (condition >= 100)
-    strcat(buf2, "in excellent condition.");
+    STRCAT(buf2, "in excellent condition.");
   else if (condition >= 90)
-    strcat(buf2, "barely damaged.");
+    STRCAT(buf2, "barely damaged.");
   else if (condition >= 80)
-    strcat(buf2, "lightly damaged.");
+    STRCAT(buf2, "lightly damaged.");
   else if (condition >= 60)
-    strcat(buf2, "moderately damaged.");
+    STRCAT(buf2, "moderately damaged.");
   else if (condition >= 30)
-    strcat(buf2, "seriously damaged.");
+    STRCAT(buf2, "seriously damaged.");
   else if (condition >= 10)
-    strcat(buf2, "extremely damaged.");
+    STRCAT(buf2, "extremely damaged.");
   else
-    strcat(buf2, "almost completely destroyed.");
-  strcat(buf2, "\r\n");
+    STRCAT(buf2, "almost completely destroyed.");
+  STRCAT(buf2, "\r\n");
   send_to_char(buf2, ch);
 }
 
@@ -206,9 +207,9 @@ void show_obj_to_char(struct obj_data * object, struct char_data * ch, int mode)
   *buf = '\0';
   if ((mode == 0) && object->text.room_desc)
   {
-    strcpy(buf, CCHAR ? CCHAR : "");
+    STRCPY(buf, CCHAR ? CCHAR : "");
     if (object->graffiti)
-      strcat(buf, object->graffiti);
+      STRCAT(buf, object->graffiti);
     else {
       // Gun magazines get special consideration.
       if (GET_OBJ_TYPE(object) == ITEM_GUN_MAGAZINE && GET_MAGAZINE_BONDED_MAXAMMO(object)) {
@@ -222,26 +223,26 @@ void show_obj_to_char(struct obj_data * object, struct char_data * ch, int mode)
       } else if (GET_OBJ_TYPE(object) == ITEM_GUN_AMMO) {
         snprintf(buf, sizeof(buf), "^gA metal box of %s has been left here.^n", get_ammo_representation(GET_AMMOBOX_WEAPON(object), GET_AMMOBOX_TYPE(object), 0));
       } else {
-        strcat(buf, object->text.room_desc);
+        STRCAT(buf, object->text.room_desc);
       }
     }
   } else if (GET_OBJ_NAME(object) && mode == 1)
   {
-    strcpy(buf, GET_OBJ_NAME(object));
+    STRCPY(buf, GET_OBJ_NAME(object));
     if (GET_OBJ_TYPE(object) == ITEM_DESIGN)
-      strcat(buf, " (Plan)");
+      STRCAT(buf, " (Plan)");
     if (GET_OBJ_VNUM(object) == 108 && !GET_OBJ_TIMER(object))
-      strcat(buf, " (Uncooked)");
+      STRCAT(buf, " (Uncooked)");
     if (GET_OBJ_TYPE(object) == ITEM_FOCUS && GET_OBJ_VAL(object, 9) == GET_IDNUM(ch))
-      strcat(buf, " ^Y(Geas)^n");
+      STRCAT(buf, " ^Y(Geas)^n");
   } else if (GET_OBJ_NAME(object) && ((mode == 2) || (mode == 3) || (mode == 4) || (mode == 7)))
-    strcpy(buf, GET_OBJ_NAME(object));
+    STRCPY(buf, GET_OBJ_NAME(object));
   else if (mode == 5)
   {
     if (GET_OBJ_DESC(object))
-      strcpy(buf, GET_OBJ_DESC(object));
+      STRCPY(buf, GET_OBJ_DESC(object));
     else
-      strcpy(buf, "You see nothing special..");
+      STRCPY(buf, "You see nothing special..");
   } else if (mode == 8)
     snprintf(buf, sizeof(buf), "\t\t\t\t%s", GET_OBJ_NAME(object));
   if (mode == 7 || mode == 8) {
@@ -251,36 +252,36 @@ void show_obj_to_char(struct obj_data * object, struct char_data * ch, int mode)
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " (Holding %s)", GET_OBJ_NAME(object->contains));
       if (GET_OBJ_VAL(object, 3) == 1 && ((object->worn_by && object->worn_by == ch) ||
                                           (object->in_obj && object->in_obj->worn_by && object->in_obj->worn_by == ch)))
-        strcat(buf, " ^Y(Ready)");
+        STRCAT(buf, " ^Y(Ready)");
     } else if (GET_OBJ_TYPE(object) == ITEM_WORN && object->contains && !PRF_FLAGGED(ch, PRF_COMPACT))
-      strcat(buf, " carrying:");
+      STRCAT(buf, " carrying:");
     else if (GET_OBJ_TYPE(object) == ITEM_FOCUS) {
       if (GET_OBJ_VAL(object, 4))
-        strcat(buf, " ^m(Activated Focus)^n");
+        STRCAT(buf, " ^m(Activated Focus)^n");
       if (GET_OBJ_VAL(object, 9) == GET_IDNUM(ch))
-        strcat(buf, " ^Y(Geas)^n");
+        STRCAT(buf, " ^Y(Geas)^n");
     }
   }
   if (mode != 3)
   {
     if (IS_OBJ_STAT(object, ITEM_INVISIBLE)) {
-      strcat(buf, " ^B(invisible)");
+      STRCAT(buf, " ^B(invisible)");
     }
     
     if ((GET_OBJ_TYPE(object) == ITEM_FOCUS || IS_OBJ_STAT(object, ITEM_MAGIC))
         && (IS_ASTRAL(ch) || IS_DUAL(ch))) {
-      strcat(buf, " ^Y(magic aura)");
+      STRCAT(buf, " ^Y(magic aura)");
     }
     
     if (IS_OBJ_STAT(object, ITEM_GLOW)) {
-      strcat(buf, " ^W(glowing)");
+      STRCAT(buf, " ^W(glowing)");
     }
     
     if (IS_OBJ_STAT(object, ITEM_HUM)) {
-      strcat(buf, " ^c(humming)");
+      STRCAT(buf, " ^c(humming)");
     }
   }
-  strcat(buf, "^N\r\n");
+  STRCAT(buf, "^N\r\n");
   send_to_char(buf, ch);
   if ((mode == 7 || mode == 8) && !PRF_FLAGGED(ch, PRF_COMPACT))
     if (GET_OBJ_TYPE(object) == ITEM_WORN && object->contains)
@@ -295,7 +296,7 @@ void show_veh_to_char(struct veh_data * vehicle, struct char_data * ch)
 {
   *buf = '\0';
   
-  strcpy(buf, CCHAR ? CCHAR : "");
+  STRCPY(buf, CCHAR ? CCHAR : "");
   
   if (vehicle->damage >= VEH_DAM_THRESHOLD_DESTROYED)
   {
@@ -312,7 +313,7 @@ void show_veh_to_char(struct veh_data * vehicle, struct char_data * ch)
         if ((vehicle->type == VEH_BIKE && vehicle->people) || vehicle->restring)
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%s waits here", GET_VEH_NAME(vehicle));
         else
-          strcat(buf, vehicle->description);
+          STRCAT(buf, vehicle->description);
         break;
       case SPEED_IDLE:
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%s idles here", GET_VEH_NAME(vehicle));
@@ -330,12 +331,12 @@ void show_veh_to_char(struct veh_data * vehicle, struct char_data * ch)
     if (vehicle->towing) {
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), ", towing %s", GET_VEH_NAME(vehicle->towing));
     }
-    strcat(buf, ".");
+    STRCAT(buf, ".");
   }
   
   if (vehicle->owner && GET_IDNUM(ch) == vehicle->owner)
-    strcat(buf, " ^Y(Yours)");
-  strcat(buf, "^N\r\n");
+    STRCAT(buf, " ^Y(Yours)");
+  STRCAT(buf, "^N\r\n");
   send_to_char(buf, ch);
 }
 
@@ -485,40 +486,40 @@ void diag_char_to_char(struct char_data * i, struct char_data * ch)
   
   if (phys >= 100 || (GET_TRADITION(i) == TRAD_ADEPT && phys >= 0 &&
                       ((100 - phys) / 10) <= GET_POWER(i, ADEPT_PAIN_RESISTANCE)))
-    strcat(buf, " is in excellent physical condition");
+    STRCAT(buf, " is in excellent physical condition");
   else if (phys >= 90)
-    strcat(buf, " has a few scratches");
+    STRCAT(buf, " has a few scratches");
   else if (phys >= 75)
-    strcat(buf, " has some small wounds and bruises");
+    STRCAT(buf, " has some small wounds and bruises");
   else if (phys >= 50)
-    strcat(buf, " has quite a few wounds");
+    STRCAT(buf, " has quite a few wounds");
   else if (phys >= 30)
-    strcat(buf, " has some big nasty wounds and scratches");
+    STRCAT(buf, " has some big nasty wounds and scratches");
   else if (phys >= 15)
-    strcat(buf, " looks pretty hurt");
+    STRCAT(buf, " looks pretty hurt");
   else if (phys >= 0)
-    strcat(buf, " is in awful condition");
+    STRCAT(buf, " is in awful condition");
   else
-    strcat(buf, " is bleeding awfully from big wounds");
+    STRCAT(buf, " is bleeding awfully from big wounds");
   
   if (phys <= 0)
-    strcat(buf, " and is unconscious.\r\n");
+    STRCAT(buf, " and is unconscious.\r\n");
   else if (ment >= 100 || (GET_TRADITION(i) == TRAD_ADEPT && ment >= 0 &&
                            ((100 - ment) / 10) <= (GET_POWER(i, ADEPT_PAIN_RESISTANCE) -
                                                    (int)((GET_MAX_PHYSICAL(i) - GET_PHYSICAL(i)) / 100))))
-    strcat(buf, " and is alert.\r\n");
+    STRCAT(buf, " and is alert.\r\n");
   else if (ment >= 90)
-    strcat(buf, " and is barely tired.\r\n");
+    STRCAT(buf, " and is barely tired.\r\n");
   else if (ment >= 75)
-    strcat(buf, " and is slightly worn out.\r\n");
+    STRCAT(buf, " and is slightly worn out.\r\n");
   else if (ment >= 50)
-    strcat(buf, " and is fatigued.\r\n");
+    STRCAT(buf, " and is fatigued.\r\n");
   else if (ment >= 30)
-    strcat(buf, " and is weary.\r\n");
+    STRCAT(buf, " and is weary.\r\n");
   else if (ment >= 10)
-    strcat(buf, " and is groggy.\r\n");
+    STRCAT(buf, " and is groggy.\r\n");
   else
-    strcat(buf, " and is completely unconscious.\r\n");
+    STRCAT(buf, " and is completely unconscious.\r\n");
   
   
   send_to_char(buf, ch);
@@ -590,11 +591,11 @@ void look_at_char(struct char_data * i, struct char_data * ch)
         if (init) {
           snprintf(buf, sizeof(buf), "%s aura is ", CAP(HSHR(i)));
           if (GET_GRADE(i) > 6)
-            strcat(buf, "^Wblindingly bright^n.");
+            STRCAT(buf, "^Wblindingly bright^n.");
           else if (GET_GRADE(i) > 2)
-            strcat(buf, "^Wshining bright^n.");
-          else strcat(buf, "^Wsomewhat bright^n.");
-          strcat(buf, "\r\n");
+            STRCAT(buf, "^Wshining bright^n.");
+          else STRCAT(buf, "^Wsomewhat bright^n.");
+          STRCAT(buf, "\r\n");
           send_to_char(buf, ch);
         }
       }
@@ -704,7 +705,7 @@ void look_at_char(struct char_data * i, struct char_data * ch)
           continue;
         if ((IS_SET(GET_OBJ_VAL(tmp_obj, 3), EYE_OPTMAG1) || IS_SET(GET_OBJ_VAL(tmp_obj, 3), EYE_OPTMAG2) ||
              IS_SET(GET_OBJ_VAL(tmp_obj, 3), EYE_OPTMAG3)) && success_test(GET_INT(ch), 9) > 0)
-          strncat(buf2, "Optical Magnification\r\n", sizeof(buf2) - strlen(buf2) - 1);
+          STRCAT(buf2, "Optical Magnification\r\n");
         if (IS_SET(GET_OBJ_VAL(tmp_obj, 3), EYE_COSMETIC))
           snprintf(ENDOF(buf2), sizeof(buf2) - strlen(buf2), "%s\r\n", GET_OBJ_NAME(tmp_obj));
         break;
@@ -761,18 +762,18 @@ void list_one_char(struct char_data * i, struct char_data * ch)
       GET_POS(i) == GET_DEFAULT_POS(i) && !MOB_FLAGGED(i, MOB_FLAMEAURA))
   {
     if (IS_AFFECTED(i, AFF_INVISIBLE))
-      strcpy(buf, "*");
+      STRCPY(buf, "*");
     else
       *buf = '\0';
     if (IS_ASTRAL(ch) || IS_DUAL(ch)) {
       if (IS_ASTRAL(i))
-        strcat(buf, "(astral) ");
+        STRCAT(buf, "(astral) ");
       else if (IS_DUAL(i) && IS_NPC(i))
-        strcat(buf, "(dual) ");
+        STRCAT(buf, "(dual) ");
     }
     if (AFF_FLAGGED(i, AFF_MANIFEST) && !(IS_ASTRAL(ch) || IS_DUAL(ch)))
-      strcat(buf, "The ghostly image of ");
-    strcat(buf, i->player.physical_text.room_desc);
+      STRCAT(buf, "The ghostly image of ");
+    STRCAT(buf, i->player.physical_text.room_desc);
     
     if (DISPLAY_HELPFUL_STRINGS_FOR_MOB_FUNCS) {
       bool already_printed = FALSE;
@@ -1006,22 +1007,22 @@ if (mob_index[GET_MOB_RNUM(i)].func == (function) || mob_index[GET_MOB_RNUM(i)].
   }
   make_desc(ch, i, buf, FALSE, FALSE);
   if (PRF_FLAGGED(i, PRF_AFK))
-    strcat(buf, " (AFK)");
+    STRCAT(buf, " (AFK)");
   if (PLR_FLAGGED(i, PLR_SWITCHED))
-    strcat(buf, " (switched)");
+    STRCAT(buf, " (switched)");
   if (IS_AFFECTED(i, AFF_INVISIBLE) || IS_AFFECTED(i, AFF_IMP_INVIS) || IS_AFFECTED(i, AFF_SPELLINVIS) || IS_AFFECTED(i, AFF_SPELLIMPINVIS))
-    strcat(buf, " (invisible)");
+    STRCAT(buf, " (invisible)");
   if (PLR_FLAGGED(ch, PLR_NEWBIE) && !IS_NPC(i))
-    strcat(buf, " (player)");
+    STRCAT(buf, " (player)");
   if (IS_AFFECTED(i, AFF_HIDE))
-    strcat(buf, " (hidden)");
+    STRCAT(buf, " (hidden)");
   if (!IS_NPC(i) && !i->desc &&
       !PLR_FLAGS(i).AreAnySet(PLR_MATRIX, PLR_PROJECT, PLR_SWITCHED, ENDBIT))
-    strcat(buf, " (linkless)");
+    STRCAT(buf, " (linkless)");
   if (IS_ASTRAL(ch) || IS_DUAL(ch)) {
     bool dual = TRUE;
     if (IS_ASTRAL(i))
-      strcat(buf, " (astral)");
+      STRCAT(buf, " (astral)");
     if (GET_GRADE(i)) {
       bool init = TRUE;
       if (GET_METAMAGIC(i, META_MASKING)) {
@@ -1032,98 +1033,98 @@ if (mob_index[GET_MOB_RNUM(i)].func == (function) || mob_index[GET_MOB_RNUM(i)].
       }
       if (init) {
         if (GET_GRADE(i) > 6)
-          strcat(buf, " ^W(Blinding Aura)^n");
+          STRCAT(buf, " ^W(Blinding Aura)^n");
         else if (GET_GRADE(i) > 2)
-          strcat(buf, " ^W(Shining Aura)^n");
-        else strcat(buf, " ^W(Bright Aura)^n");
+          STRCAT(buf, " ^W(Shining Aura)^n");
+        else STRCAT(buf, " ^W(Bright Aura)^n");
       }
     }
     if (IS_DUAL(i) && dual)
-      strcat(buf, " (dual)");
+      STRCAT(buf, " (dual)");
   }
   if (PLR_FLAGGED(i, PLR_WRITING))
-    strcat(buf, " (writing)");
+    STRCAT(buf, " (writing)");
   if (PLR_FLAGGED(i, PLR_MAILING))
-    strcat(buf, " (mailing)");
+    STRCAT(buf, " (mailing)");
   if (PLR_FLAGGED(i, PLR_EDITING))
-    strcat(buf, " (editing)");
+    STRCAT(buf, " (editing)");
   if (PLR_FLAGGED(i, PLR_PROJECT))
-    strcat(buf, " (projecting)");
+    STRCAT(buf, " (projecting)");
   if (IS_NPC(i) && MOB_FLAGGED(i, MOB_FLAMEAURA))
-    strcat(buf, ", surrounded by flames,");
+    STRCAT(buf, ", surrounded by flames,");
   
   if (GET_QUI(i) <= 0)
-    strcat(buf, " is here, seemingly paralyzed.");
+    STRCAT(buf, " is here, seemingly paralyzed.");
   else if (PLR_FLAGGED(i, PLR_MATRIX))
-    strcat(buf, " is here, jacked into a cyberdeck.");
+    STRCAT(buf, " is here, jacked into a cyberdeck.");
   else if (PLR_FLAGGED(i, PLR_REMOTE))
-    strcat(buf, " is here, jacked into a remote control deck.");
+    STRCAT(buf, " is here, jacked into a remote control deck.");
   else if (AFF_FLAGGED(i, AFF_DESIGN) || AFF_FLAGGED(i, AFF_PROGRAM))
-    strcat(buf, " is here, typing away at a computer.");
+    STRCAT(buf, " is here, typing away at a computer.");
   else if (AFF_FLAGGED(i, AFF_PART_DESIGN) || AFF_FLAGGED(i, AFF_PART_BUILD))
-    strcat(buf, " is here, working on a cyberdeck.");
+    STRCAT(buf, " is here, working on a cyberdeck.");
   else if (AFF_FLAGGED(i, AFF_SPELLDESIGN))
-    strcat(buf, " is here, working on a spell design.");
+    STRCAT(buf, " is here, working on a spell design.");
   else if (AFF_FLAGGED(i, AFF_CONJURE))
-    strcat(buf, " is here, performing a conjuring ritual.");
+    STRCAT(buf, " is here, performing a conjuring ritual.");
   else if (AFF_FLAGGED(i, AFF_LODGE))
-    strcat(buf, " is here, building a shamanic lodge.");
+    STRCAT(buf, " is here, building a shamanic lodge.");
   else if (AFF_FLAGGED(i, AFF_CIRCLE))
-    strcat(buf, " is here, drawing a hermetic circle.");
+    STRCAT(buf, " is here, drawing a hermetic circle.");
   else if (AFF_FLAGGED(i, AFF_PACKING))
-    strcat(buf, " is here, working on a workshop.");
+    STRCAT(buf, " is here, working on a workshop.");
   else if (AFF_FLAGGED(i, AFF_BONDING))
-    strcat(buf, " is here, performing a bonding ritual.");
+    STRCAT(buf, " is here, performing a bonding ritual.");
   else if (AFF_FLAGGED(i, AFF_PRONE))
-    strcat(buf, " is laying prone here.");
+    STRCAT(buf, " is laying prone here.");
   else if (AFF_FLAGGED(i, AFF_PILOT))
   {
     if (AFF_FLAGGED(i, AFF_RIG))
-      strcat(buf, " is plugged into the dashboard.");
+      STRCAT(buf, " is plugged into the dashboard.");
     else
-      strcat(buf, " is sitting in the drivers seat.");
+      STRCAT(buf, " is sitting in the drivers seat.");
   } else if ((obj = get_mount_manned_by_ch(i))) {
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " is manning %s.", GET_OBJ_NAME(obj));
   } else if (GET_POS(i) != POS_FIGHTING)
   {
-    strcat(buf, positions[(int) GET_POS(i)]);
+    STRCAT(buf, positions[(int) GET_POS(i)]);
     if (GET_DEFPOS(i))
       snprintf(buf2, sizeof(buf2), ", %s.", GET_DEFPOS(i));
     else
-      strncpy(buf2, ".", sizeof(buf2));
-    strcat(buf, buf2);
+      STRCPY(buf2, ".");
+    STRCAT(buf, buf2);
   } else
   {
     if (FIGHTING(i)) {
       if (AFF_FLAGGED(ch, AFF_BANISH))
-        strcat(buf, " is here, attempting to banish ");
+        STRCAT(buf, " is here, attempting to banish ");
       else
-        strcat(buf, " is here, fighting ");
+        STRCAT(buf, " is here, fighting ");
       if (FIGHTING(i) == ch)
-        strcat(buf, "YOU!");
+        STRCAT(buf, "YOU!");
       else {
         if (i->in_room == FIGHTING(i)->in_room)
-          strcat(buf, PERS(FIGHTING(i), ch));
+          STRCAT(buf, PERS(FIGHTING(i), ch));
         else
-          strcat(buf, "someone in the distance");
-        strcat(buf, "!");
+          STRCAT(buf, "someone in the distance");
+        STRCAT(buf, "!");
       }
     } else if (FIGHTING_VEH(i)) {
-      strcat(buf, " is here, fighting ");
+      STRCAT(buf, " is here, fighting ");
       if ((ch->in_veh && ch->in_veh == FIGHTING_VEH(i)) || (ch->char_specials.rigging && ch->char_specials.rigging == FIGHTING_VEH(i)))
-        strcat(buf, "YOU!");
+        STRCAT(buf, "YOU!");
       else {
         if (i->in_room == FIGHTING_VEH(i)->in_room)
-          strcat(buf, GET_VEH_NAME(FIGHTING_VEH(i)));
+          STRCAT(buf, GET_VEH_NAME(FIGHTING_VEH(i)));
         else
-          strcat(buf, "someone in the distance");
-        strcat(buf, "!");
+          STRCAT(buf, "someone in the distance");
+        STRCAT(buf, "!");
       }
     } else                      /* NIL fighting pointer */
-      strcat(buf, " is here struggling with thin air.");
+      STRCAT(buf, " is here struggling with thin air.");
   }
   
-  strcat(buf, "\r\n");
+  STRCAT(buf, "\r\n");
   
   send_to_char(buf, ch);
 }
@@ -1191,7 +1192,7 @@ void disp_long_exits(struct char_data *ch, bool autom)
   struct room_data *wasin = NULL;
   struct veh_data *veh;
   *buf = '\0';
-  buf2[0] = '\0'; // so strcats will start at the beginning
+  buf2[0] = '\0'; // so STRCATs will start at the beginning
   
   RIG_VEH(ch, veh);
   if (veh)
@@ -1208,13 +1209,13 @@ void disp_long_exits(struct char_data *ch, bool autom)
                 EXIT(ch, door)->to_room->name,
                 (IS_SET(EXIT(ch, door)->exit_info, EX_CLOSED) ? " (closed)" : ""));
         if (autom)
-          strcat(buf, "^c");
-        strcat(buf, CAP(buf2));
+          STRCAT(buf, "^c");
+        STRCAT(buf, CAP(buf2));
       } else if (!IS_SET(EXIT(ch, door)->exit_info, EX_HIDDEN)) {
         snprintf(buf2, sizeof(buf2), "%-5s - ", dirs[door]);
         if (!IS_ASTRAL(ch) &&
             !LIGHT_OK(ch))
-          strcat(buf2, "Too dark to tell.\r\n");
+          STRCAT(buf2, "Too dark to tell.\r\n");
         else {
           if (IS_SET(EXIT(ch, door)->exit_info, EX_CLOSED)) {
             SPECIAL(call_elevator);
@@ -1226,17 +1227,17 @@ void disp_long_exits(struct char_data *ch, bool autom)
                                             || ((ROOM_FLAGGED(get_ch_in_room(ch), ROOM_ELEVATOR_SHAFT) || get_ch_in_room(ch)->func == elevator_spec)
                                               && EXIT(ch, door)->to_room->func == call_elevator)
                                            )) {
-                strcat(buf2, "A pair of closed elevator doors");
+                STRCAT(buf2, "A pair of closed elevator doors");
             }
             else
               snprintf(ENDOF(buf2), sizeof(buf2) - strlen(buf2), "A closed %s", *(fname(EXIT(ch, door)->keyword)) ? fname(EXIT(ch, door)->keyword) : "door");
           } else
-            strcat(buf2, EXIT(ch, door)->to_room->name);
-          strcat(buf2, "\r\n");
+            STRCAT(buf2, EXIT(ch, door)->to_room->name);
+          STRCAT(buf2, "\r\n");
         }
         if (autom)
-          strcat(buf, "^c");
-        strcat(buf, CAP(buf2));
+          STRCAT(buf, "^c");
+        STRCAT(buf, CAP(buf2));
       }
     }
   }
@@ -1445,30 +1446,30 @@ void look_at_room(struct char_data * ch, int ignore_brief)
     send_to_char(blood_messages[(int) ch->in_room->blood], ch);
     
   if (ch->in_room->debris > 0) {
-    strncpy(buf, "^y", sizeof(buf));
+    STRCPY(buf, "^y");
     
     if (ch->in_room->debris < 5) {
-      strncat(buf, "A few spent casings and empty mags are scattered here.", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "A few spent casings and empty mags are scattered here.");
     }
     else if (ch->in_room->debris < 10) {
-      strncat(buf, "Spent casings and empty mags are scattered here.", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "Spent casings and empty mags are scattered here.");
     }
     else if (ch->in_room->debris < 20) {
-      strncat(buf, "Bullet holes, spent casings, and empty mags litter the area.", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "Bullet holes, spent casings, and empty mags litter the area.");
     }
     else if (ch->in_room->debris < 30) {
-      strncat(buf, "This place has been shot up, and weapons debris is everywhere.", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "This place has been shot up, and weapons debris is everywhere.");
     }
     else if (ch->in_room->debris < 40) {
-      strncat(buf, "The acrid scent of propellant hangs in the air amidst the weapons debris.", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "The acrid scent of propellant hangs in the air amidst the weapons debris.");
     }
     else if (ch->in_room->debris < 45) {
-      strncat(buf, "Veritable piles of spent casings and empty mags fill the area.", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "Veritable piles of spent casings and empty mags fill the area.");
     }
     else {
-      strncpy(buf, "^YIt looks like World War III was fought here!", sizeof(buf));
+      STRCPY(buf, "^YIt looks like World War III was fought here!");
     }
-    strncat(buf, "^n\r\n", sizeof(buf) - strlen(buf) - 1);
+    STRCAT(buf, "^n\r\n");
     send_to_char(buf, ch);
   }
   
@@ -1498,22 +1499,22 @@ void look_at_room(struct char_data * ch, int ignore_brief)
           break;
       }
     } else if (GET_BACKGROUND_COUNT(ch->in_room) < 6) {
-      strncpy(buf, "^cA", sizeof(buf));
+      STRCPY(buf, "^cA");
       switch (GET_BACKGROUND_COUNT(ch->in_room)) {
         case 1:
-          strcat(buf, " distracting");
+          STRCAT(buf, " distracting");
           break;
         case 2:
-          strcat(buf, " light");
+          STRCAT(buf, " light");
           break;
         case 3:
-          strcat(buf, " heavy");
+          STRCAT(buf, " heavy");
           break;
         case 4:
-          strcat(buf, "n almost overwhelming");
+          STRCAT(buf, "n almost overwhelming");
           break;
         case 5:
-          strcat(buf, "n overwhelming");
+          STRCAT(buf, "n overwhelming");
           break;
       }
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " aura of %s pervades the area.^n\r\n", background_types[GET_BACKGROUND_AURA(ch->in_room)]);
@@ -1914,7 +1915,7 @@ void look_at_target(struct char_data * ch, char *arg)
 
 ACMD_CONST(do_look) {
   char not_const[MAX_STRING_LENGTH];
-  strcpy(not_const, argument);
+  STRCPY(not_const, argument);
   ACMD_DECLARE(do_look);
   do_look(ch, not_const, cmd, subcmd);
 }
@@ -1962,20 +1963,20 @@ ACMD(do_look)
 
 void look_at_veh(struct char_data *ch, struct veh_data *veh, int success)
 {
-  strcpy(buf, GET_VEH_NAME(veh));
+  STRCPY(buf, GET_VEH_NAME(veh));
   int cond = 10 - veh->damage;
   if (cond >= 10)
-    strcat(buf, " is in perfect condition.\r\n");
+    STRCAT(buf, " is in perfect condition.\r\n");
   else if (cond >= 9)
-    strcat(buf, " has some light scratches.\r\n");
+    STRCAT(buf, " has some light scratches.\r\n");
   else if (cond >= 5)
-    strcat(buf, " is dented and scratched.\r\n");
+    STRCAT(buf, " is dented and scratched.\r\n");
   else if (cond >= 3)
-    strcat(buf, " has seen better days.\r\n");
+    STRCAT(buf, " has seen better days.\r\n");
   else if (cond >= 1)
-    strcat(buf, " is barely holding together.\r\n");
+    STRCAT(buf, " is barely holding together.\r\n");
   else
-    strcat(buf, " is wrecked.\r\n");
+    STRCAT(buf, " is wrecked.\r\n");
   send_to_char(buf, ch);
   disp_mod(veh, ch, success);
 }
@@ -2016,24 +2017,24 @@ void do_probe_object(struct char_data * ch, struct obj_data * j) {
     j->obj_flags.wear_flags.PrintBits(buf2, MAX_STRING_LENGTH, wear_bits, NUM_WEARS);
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "It can be worn or equipped at the following wear location(s):\r\n  ^c%s^n\r\n", buf2);
   } else {
-    strncat(buf, "This item cannot be worn or equipped.\r\n", sizeof(buf) - strlen(buf) - 1);
+    STRCAT(buf, "This item cannot be worn or equipped.\r\n");
   }
   if (was_take)
     j->obj_flags.wear_flags.SetBit(ITEM_WEAR_TAKE);
   else
-    strncat(buf, "^yIt cannot be picked up once dropped.^n\r\n", sizeof(buf) - strlen(buf) - 1);
+    STRCAT(buf, "^yIt cannot be picked up once dropped.^n\r\n");
   
   switch (GET_OBJ_TYPE(j))
   {
     case ITEM_LIGHT:
       if (GET_OBJ_VAL(j, 2) == -1) {
-        strncat(buf, "It is an ^cinfinite^n light source.", sizeof(buf) - strlen(buf) - 1);
+        STRCAT(buf, "It is an ^cinfinite^n light source.");
       } else {
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "It has ^c%d^n hours of light left.", GET_OBJ_VAL(j, 2));
       }
       break;
     case ITEM_FIREWEAPON:
-      strncat(buf, "As a fireweapon, it is not currently implemented.\r\n", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "As a fireweapon, it is not currently implemented.\r\n");
       /*
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "It is a ^c%s^n that requires ^c%d^n strength to use in combat.\r\n",
               GET_OBJ_VAL(j, 5) == 0 ? "Bow" : "Crossbow", GET_OBJ_VAL(j, 6));
@@ -2071,7 +2072,7 @@ void do_probe_object(struct char_data * ch, struct obj_data * j) {
                    wound_arr[MIN(DEADLY, GET_WEAPON_DAMAGE_CODE(j) + (int)(burst_count / 3))],
                    !IS_DAMTYPE_PHYSICAL(get_weapon_damage_type(j)) ? " (stun)" : "");
         } else {
-          strncat(buf, ".", sizeof(buf) - strlen(buf) - 1);
+          STRCAT(buf, ".");
         }
         
         if (j->contains 
@@ -2082,19 +2083,19 @@ void do_probe_object(struct char_data * ch, struct obj_data * j) {
                    ammo_type[GET_MAGAZINE_AMMO_TYPE(j->contains)].name);
           switch (GET_MAGAZINE_AMMO_TYPE(j->contains)) {
             case AMMO_APDS:
-              strncat(buf, "pierces through enemy ballistic armor, halving its value.", sizeof(buf) - strlen(buf) - 1);
+              STRCAT(buf, "pierces through enemy ballistic armor, halving its value.");
               break;
             case AMMO_EX:
-              strncat(buf, "increases power by one and ", sizeof(buf) - strlen(buf) - 1);
+              STRCAT(buf, "increases power by one and ");
               // fall through
             case AMMO_EXPLOSIVE:
-              strncat(buf, "ignores one point of enemy ballistic armor.", sizeof(buf) - strlen(buf) - 1);
+              STRCAT(buf, "ignores one point of enemy ballistic armor.");
               break;
             case AMMO_FLECHETTE:
-              strncat(buf, "deals more damage to fully unarmored targets.", sizeof(buf) - strlen(buf) - 1);
+              STRCAT(buf, "deals more damage to fully unarmored targets.");
               break;
             case AMMO_GEL:
-              strncat(buf, "deals mental instead of physical damage, but treats the enemy's ballistic armor as two points higher.", sizeof(buf) - strlen(buf) - 1);
+              STRCAT(buf, "deals mental instead of physical damage, but treats the enemy's ballistic armor as two points higher.");
               break;
           }
         }
@@ -2118,7 +2119,7 @@ void do_probe_object(struct char_data * ch, struct obj_data * j) {
             
             // format flair
             if (!added_extra_carriage_return) {
-              strcat(buf, "\r\n");
+              STRCAT(buf, "\r\n");
               added_extra_carriage_return = TRUE;
             }
             
@@ -2158,7 +2159,7 @@ void do_probe_object(struct char_data * ch, struct obj_data * j) {
                         gun_accessory_locations[mount_location]);
                 break;
               case ACCESS_SMARTGOGGLE:
-                strcat(buf, "\r\n^RYou should never see this-- alert an imm.^n");
+                STRCAT(buf, "\r\n^RYou should never see this-- alert an imm.^n");
                 break;
               case ACCESS_BIPOD:
                 snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "\r\nA bipod installed on the %s provides ^c%d^n round%s worth of recoil compensation when fired from prone.",
@@ -2172,7 +2173,7 @@ void do_probe_object(struct char_data * ch, struct obj_data * j) {
                 break;
               case ACCESS_BAYONET:
                 if (mount_location != ACCESS_ACCESSORY_LOCATION_UNDER) {
-                  strcat(buf, "\r\n^RYour bayonet has been mounted in the wrong location and is nonfunctional. Alert an imm.");
+                  STRCAT(buf, "\r\n^RYour bayonet has been mounted in the wrong location and is nonfunctional. Alert an imm.");
                 } else {
                   snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "\r\nA bayonet attached to the %s allows you to use the Pole Arms skill when defending from melee attacks.",
                           gun_accessory_locations[mount_location]);
@@ -2197,11 +2198,11 @@ void do_probe_object(struct char_data * ch, struct obj_data * j) {
         }
         
         if (burst_count > 0 && burst_count - standing_recoil_comp > 0) {
-          strncat(buf, "\r\n\r\n^yIt doesn't have enough recoil compensation", sizeof(buf) - strlen(buf) - 1);
+          STRCAT(buf, "\r\n\r\n^yIt doesn't have enough recoil compensation");
           if (burst_count - standing_recoil_comp - prone_recoil_comp <= 0) {
-            strncat(buf, " unless fired from prone", sizeof(buf) - strlen(buf) - 1);
+            STRCAT(buf, " unless fired from prone");
           } else if (prone_recoil_comp > 0){
-            strncat(buf, " even when fired from prone", sizeof(buf) - strlen(buf) - 1);
+            STRCAT(buf, " even when fired from prone");
           }
           // Do we require more recoil comp than is currently attached?
           switch (GET_WEAPON_SKILL(j)) {
@@ -2240,13 +2241,13 @@ void do_probe_object(struct char_data * ch, struct obj_data * j) {
       break;
     case ITEM_MISSILE:
       if (GET_OBJ_VAL(j, 0) == 0) {
-        strncat(buf, "It is an ^carrow^n suitable for use in a bow.", sizeof(buf) - strlen(buf) - 1);
+        STRCAT(buf, "It is an ^carrow^n suitable for use in a bow.");
       } else {
-        strncat(buf, "It is a ^cbolt^n suitable for use in a crossbow.", sizeof(buf) - strlen(buf) - 1);
+        STRCAT(buf, "It is a ^cbolt^n suitable for use in a crossbow.");
       }
       break;
     case ITEM_WORN:
-      strncpy(buf1, "It has space for ", sizeof(buf1));
+      STRCPY(buf1, "It has space for ");
       
       if (GET_WORN_POCKETS_HOLSTERS(j) > 0) {
         snprintf(ENDOF(buf1), sizeof(buf1) - strlen(buf1), "%s^c%d^n holster%s", 
@@ -2268,7 +2269,7 @@ void do_probe_object(struct char_data * ch, struct obj_data * j) {
       if (has_pockets) {
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%s.\r\n", buf1);
       } else {
-        strcat(buf, "It has no pockets.\r\n");
+        STRCAT(buf, "It has no pockets.\r\n");
       }
       bal = GET_WORN_BALLISTIC(j);
       imp = GET_WORN_IMPACT(j);
@@ -2301,7 +2302,7 @@ void do_probe_object(struct char_data * ch, struct obj_data * j) {
                 (GET_OBJ_VAL(j, 2) == 1 ? "6-digit PIN" : (GET_OBJ_VAL(j, 2) == 2 ? "thumbprint" : "retina")), GET_OBJ_VAL(j, 0));
       break;
     case ITEM_KEY:
-      strncat(buf, "No OOC information is available about this key.", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "No OOC information is available about this key.");
       break;
     case ITEM_FOOD:
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "It provides ^c%d^n units of nutrition when eaten.", GET_OBJ_VAL(j, 0));
@@ -2399,7 +2400,7 @@ void do_probe_object(struct char_data * ch, struct obj_data * j) {
             snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "\r\nIt is designed for MPCP rating ^c%d^n.", GET_OBJ_VAL(j, 3));
           }
         } else {
-          strcat(buf, "This cyberdeck upgrade adds a ^chitcher jack^n.");
+          STRCAT(buf, "This cyberdeck upgrade adds a ^chitcher jack^n.");
         }
       } else if (GET_OBJ_VAL(j, 0) == TYPE_COMPUTER) {
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "This computer has ^c%d^n units of active memory and ^c%d^n units of storage memory.",
@@ -2437,7 +2438,7 @@ void do_probe_object(struct char_data * ch, struct obj_data * j) {
       }
       
       // Val 5
-      sprintbit(GET_OBJ_VAL(j, 5), engine_type, buf2);
+      sprintbit(GET_OBJ_VAL(j, 5), engine_type, buf2, sizeof(buf2));
       snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "\r\nIt is compatible with the following engine types:\r\n^c  %s^n", buf2);
       
       // Vals 4 and 6
@@ -2481,26 +2482,26 @@ void do_probe_object(struct char_data * ch, struct obj_data * j) {
     case ITEM_CAMERA:
     case ITEM_PHONE:
     case ITEM_KEYRING:
-      strncat(buf, "Nothing stands out about this item's OOC values. Try EXAMINE it instead.", sizeof(buf) - strlen(buf) - 1);
+      STRCPY(buf, "Nothing stands out about this item's OOC values. Try EXAMINE it instead.");
       break;
     default:
-      strncpy(buf, "This item type has no probe string. Contact the staff to request one.", sizeof(buf) - strlen(buf));
+      STRCPY(buf, "This item type has no probe string. Contact the staff to request one.");
       break;
   }
   
   if (GET_OBJ_VNUM(j) == OBJ_MULTNOMAH_VISA || GET_OBJ_VNUM(j) == OBJ_CARIBBEAN_VISA) {
     if (GET_OBJ_VAL(j, 0) == GET_IDNUM(ch)) {
-      strncat(buf, "It has your picture on it.", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "It has your picture on it.");
     } else {
-      strncat(buf, "It has someone else's picture on it.", sizeof(buf) - strlen(buf) - 1);
+      STRCAT(buf, "It has someone else's picture on it.");
     }
   }
   
   if (GET_OBJ_AFFECT(j).IsSet(AFF_LASER_SIGHT) && has_smartlink) {
-    strncat(buf, "\r\n\r\n^yWARNING:^n Your smartlink overrides your laser sight-- the laser will not function.", sizeof(buf) - strlen(buf) - 1);
+    STRCAT(buf, "\r\n\r\n^yWARNING:^n Your smartlink overrides your laser sight-- the laser will not function.");
   }
   
-  strcat(buf, "^n\r\n\r\n");
+  STRCAT(buf, "^n\r\n\r\n");
   found = 0;
   
   if (strcmp(j->obj_flags.bitvector.ToString(), "0") != 0) {
@@ -2522,7 +2523,7 @@ void do_probe_object(struct char_data * ch, struct obj_data * j) {
   if (is_dont_touch)
     GET_OBJ_EXTRA(j).SetBit(ITEM_DONT_TOUCH);
   
-  strncpy(buf1, "This object modifies your character in the following ways when used:\r\n  ^c", sizeof(buf1));
+  STRCPY(buf1, "This object modifies your character in the following ways when used:\r\n  ^c");
   for (i = 0; i < MAX_OBJ_AFFECT; i++)
     if (j->affected[i].modifier)
     {
@@ -2538,7 +2539,7 @@ void do_probe_object(struct char_data * ch, struct obj_data * j) {
   }
   
   if (IS_OBJ_STAT(j, ITEM_NERPS)) {
-    strcat(buf, "^YIt has been flagged NERPS, indicating it has no special coded effects.^n\r\n");
+    STRCAT(buf, "^YIt has been flagged NERPS, indicating it has no special coded effects.^n\r\n");
   }
   
   if (j->source_info) {
@@ -2716,23 +2717,23 @@ ACMD(do_examine)
       snprintf(buf, sizeof(buf), "The card contains %d nuyen.\r\n", GET_OBJ_VAL(tmp_object, 1));
     else if (GET_OBJ_TYPE(tmp_object) == ITEM_DECK_ACCESSORY && GET_OBJ_VAL(tmp_object, 0) == TYPE_COOKER) {
       if (!tmp_object->contains)
-        strncpy(buf, "The small LED is currently off.\r\n", sizeof(buf));
+        STRCPY(buf, "The small LED is currently off.\r\n");
       else if (GET_OBJ_VAL(tmp_object, 9))
         snprintf(buf, sizeof(buf), "The small LED is currently orange, indicating activity. The progress meter for cooking %s is at %d%%.\r\n",
                  GET_OBJ_NAME(tmp_object->contains),
                  (int)(((float)(GET_DECK_ACCESSORY_COOKER_ORIGINAL_TIME(tmp_object) - GET_DECK_ACCESSORY_COOKER_TIME_REMAINING(tmp_object)) / GET_DECK_ACCESSORY_COOKER_ORIGINAL_TIME(tmp_object)) * 100));
       else if (GET_OBJ_TIMER(tmp_object->contains) == -1)
-        strncpy(buf, "The small LED is currently flashed red, indicating a failed encode.\r\n", sizeof(buf));
+        STRCPY(buf, "The small LED is currently flashed red, indicating a failed encode.\r\n");
       else
-        strncpy(buf, "The small LED is currently green, indicating a successful encode.\r\n", sizeof(buf));
+        STRCPY(buf, "The small LED is currently green, indicating a successful encode.\r\n");
       send_to_char(buf, ch);
     } else if (GET_OBJ_TYPE(tmp_object) == ITEM_PROGRAM && (GET_OBJ_VAL(tmp_object, 0) >= SOFT_ASIST_COLD || GET_OBJ_VAL(tmp_object, 0) < SOFT_SENSOR)) {
       if (GET_OBJ_TIMER(tmp_object) < 0)
-        strncpy(buf, "This chip has been ruined.\r\n", sizeof(buf));
+        STRCPY(buf, "This chip has been ruined.\r\n");
       else if (!GET_OBJ_TIMER(tmp_object))
-        strncpy(buf, "This program still needs to be encoded to a chip.\r\n", sizeof(buf));
+        STRCPY(buf, "This program still needs to be encoded to a chip.\r\n");
       else if (GET_OBJ_TIMER(tmp_object) > 0)
-        strncpy(buf, "This program has been encoded onto an optical chip.\r\n", sizeof(buf));
+        STRCPY(buf, "This program has been encoded onto an optical chip.\r\n");
       send_to_char(buf, ch);
     } else if (GET_OBJ_TYPE(tmp_object) == ITEM_DECK_ACCESSORY && GET_OBJ_VAL(tmp_object, 0) == TYPE_PARTS)
       send_to_char(ch, "There seems to be about %d nuyen worth of %s there.\r\n", GET_OBJ_COST(tmp_object), GET_OBJ_VAL(tmp_object, 1) ? "chips" : "parts");
@@ -2743,7 +2744,7 @@ ACMD(do_examine)
         int target = 4;
         int skill = get_skill(ch, SKILL_BR_COMPUTER, target);
         if (success_test(skill, target) > 0) {
-          strcpy(buf, "Custom Components:\r\n");
+          STRCPY(buf, "Custom Components:\r\n");
           for (struct obj_data *soft = tmp_object->contains; soft; soft = soft->next_content)
             if (GET_OBJ_TYPE(soft) == ITEM_PART)
               snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%-30s Type: %-24s Rating: %d\r\n",
@@ -2805,17 +2806,17 @@ ACMD(do_examine)
       snprintf(buf, sizeof(buf), "You think that %s ", GET_OBJ_NAME(tmp_object));
       int targ = GET_LEGAL_NUM(tmp_object);
       if (targ <= 0)
-        strcat(buf, "is completely legal");
+        STRCAT(buf, "is completely legal");
       else {
         int skill = get_skill(ch, SKILL_POLICE_PROCEDURES, targ), suc = success_test(skill, targ);
         if (suc <= 0)
-          strcat(buf, "is completely legal");
+          STRCAT(buf, "is completely legal");
         else {
           if (GET_LEGAL_NUM(tmp_object) <= 3)
-            strcat(buf, "is highly illegal");
+            STRCAT(buf, "is highly illegal");
           else if (GET_LEGAL_NUM(tmp_object) <= 6)
-            strcat(buf, "is illegal");
-          else strcat(buf, "could be considered illegal");
+            STRCAT(buf, "is illegal");
+          else STRCAT(buf, "could be considered illegal");
         }
       }
       send_to_char(ch, "%s.\r\n", buf);
@@ -2841,7 +2842,7 @@ ACMD(do_pool)
   if (GET_POWER(ch, ADEPT_SIDESTEP))
     snprintf(buf, sizeof(buf), "^R+%d^n", GET_POWER(ch, ADEPT_SIDESTEP));
   else
-    strncpy(buf, "  ", sizeof(buf));
+    STRCPY(buf, "  ");
   
   if (PRF_FLAGGED(ch, PRF_SCREENREADER)) {
     snprintf(pools, sizeof(pools), "  Dodge: %d%s\r\n  Body: %d\r\n  Offense: %d\r\n  Total Combat Dice: %d\r\n",
@@ -2863,7 +2864,7 @@ ACMD(do_pool)
       snprintf(ENDOF(pools), sizeof(pools) - strlen(pools), "  Spell: %d      (Casting: %d    Drain: %d    Defense: %d", GET_MAGIC(ch), GET_CASTING(ch), GET_DRAIN(ch), GET_SDEFENSE(ch));
       if (GET_METAMAGIC(ch, META_REFLECTING) == 2)
         snprintf(ENDOF(pools), sizeof(pools) - strlen(pools), "    Reflecting: %d", GET_REFLECT(ch));
-      strcat(pools, ")\r\n");
+      STRCAT(pools, ")\r\n");
     }
   }
   if (GET_CONTROL(ch) > 0)
@@ -2878,25 +2879,25 @@ const char *get_position_string(struct char_data *ch) {
   static char position_string[200];
   
   if (AFF_FLAGGED(ch, AFF_PRONE))
-    strcpy(position_string, "laying prone.");
+    STRCPY(position_string, "laying prone.");
   else switch (GET_POS(ch)) {
     case POS_DEAD:
-      strcpy(position_string, "DEAD!");
+      STRCPY(position_string, "DEAD!");
       break;
     case POS_MORTALLYW:
-      strcpy(position_string, "mortally wounded!  You should seek help!");
+      STRCPY(position_string, "mortally wounded!  You should seek help!");
       break;
     case POS_STUNNED:
-      strcpy(position_string, "stunned!  You can't move!");
+      STRCPY(position_string, "stunned!  You can't move!");
       break;
     case POS_SLEEPING:
-      strcpy(position_string, "sleeping.");
+      STRCPY(position_string, "sleeping.");
       break;
     case POS_RESTING:
-      strcpy(position_string, "resting.");
+      STRCPY(position_string, "resting.");
       break;
     case POS_SITTING:
-      strcpy(position_string, "sitting.");
+      STRCPY(position_string, "sitting.");
       break;
     case POS_FIGHTING:
       if (FIGHTING(ch))
@@ -2904,19 +2905,19 @@ const char *get_position_string(struct char_data *ch) {
       else if (FIGHTING_VEH(ch))
         snprintf(position_string, sizeof(position_string), "fighting %s.", GET_VEH_NAME(FIGHTING_VEH(ch)));
       else
-        strcpy(position_string, "fighting thin air.");
+        STRCPY(position_string, "fighting thin air.");
       break;
     case POS_STANDING:
       if (IS_WATER(ch->in_room))
-        strcpy(position_string, "swimming.");
+        STRCPY(position_string, "swimming.");
       else
-        strcpy(position_string, "standing.");
+        STRCPY(position_string, "standing.");
       break;
     case POS_LYING:
-      strcpy(position_string, "lying down.");
+      STRCPY(position_string, "lying down.");
       break;
     default:
-      strcpy(position_string, "floating.");
+      STRCPY(position_string, "floating.");
       break;
   }
   
@@ -3019,7 +3020,7 @@ const char *get_plaintext_score_stats(struct char_data *ch) {
     snprintf(ENDOF(buf2), sizeof(buf2) - strlen(buf2), "Willpower: %d\r\n", GET_WIL(ch));
   
   if (GET_TRADITION(ch) == TRAD_MUNDANE)
-    strcat(ENDOF(buf2), "As a Mundane, you have no magic.\r\n");
+    STRCAT(buf2, "As a Mundane, you have no magic.\r\n");
   else {
     if (GET_MAG(ch) != ch->real_abils.mag)
       snprintf(ENDOF(buf2), sizeof(buf2) - strlen(buf2), "Magic: %d (base magic %d)\r\n", (int)(GET_MAG(ch) / 100), MAX(0, (int)(ch->real_abils.mag / 100)));
@@ -3076,21 +3077,21 @@ const char *get_plaintext_score_misc(struct char_data *ch) {
       snprintf(ENDOF(buf2), sizeof(buf2) - strlen(buf2), "You are occupying the body of %s.\r\n", GET_NAME(ch));
   }
   
-  strcpy(ENDOF(buf2), get_vision_string(ch));
+  STRCPY(buf2, get_vision_string(ch));
   
   if (IS_AFFECTED(ch, AFF_INVISIBLE) || IS_AFFECTED(ch, AFF_IMP_INVIS) || IS_AFFECTED(ch, AFF_SPELLINVIS) || IS_AFFECTED(ch, AFF_SPELLIMPINVIS))
-    strcpy(ENDOF(buf2), "You are invisible.\r\n");
+    STRCPY(buf2, "You are invisible.\r\n");
   
 #ifdef ENABLE_HUNGER
   if (GET_COND(ch, COND_FULL) == 0)
-    strcpy(ENDOF(buf2), "You are hungry.\r\n");
+    STRCPY(buf2, "You are hungry.\r\n");
   
   if (GET_COND(ch, COND_THIRST) == 0)
-    strcpy(ENDOF(buf2), "You are thirsty.\r\n");
+    STRCPY(buf2, "You are thirsty.\r\n");
 #endif
   
   if (GET_COND(ch, COND_DRUNK) > 10)
-    strcpy(ENDOF(buf2), "You are intoxicated.\r\n");
+    STRCPY(buf2, "You are intoxicated.\r\n");
   
   if (AFF_FLAGGED(ch, AFF_SNEAK))
     snprintf(ENDOF(buf2), sizeof(buf2) - strlen(buf2), "You are sneaking.\r\n");
@@ -3113,13 +3114,13 @@ const char *get_plaintext_score_misc(struct char_data *ch) {
 }
 
 const char *get_plaintext_score_combat(struct char_data *ch) {
-  strcpy(buf3, get_plaintext_score_health(ch));
+  STRCPY(buf3, get_plaintext_score_health(ch));
   
   snprintf(ENDOF(buf3), sizeof(buf3) - strlen(buf3), "Initiative: %d + %dd6\r\n", GET_REA(ch), 1 + GET_INIT_DICE(ch));
   
   snprintf(ENDOF(buf3), sizeof(buf3) - strlen(buf3), "Armor: %d ballistic, %d impact\r\n", GET_BALLISTIC(ch), GET_IMPACT(ch));
   
-  strcat(buf3, get_vision_string(ch));
+  STRCAT(buf3, get_vision_string(ch));
   
   snprintf(ENDOF(buf3), sizeof(buf3) - strlen(buf3), "You are %s\r\n", get_position_string(ch));
   
@@ -3226,13 +3227,13 @@ ACMD(do_score)
       return;
     }
     
-    strncpy(buf, "^b//^L//^b//^L//^b//^L//^b//^L//^b//^L//^b//^L//^b//^L//^b//^L//^b//^L//^b//^L//"
+    STRCPY(buf, "^b//^L//^b//^L//^b//^L//^b//^L//^b//^L//^b//^L//^b//^L//^b//^L//^b//^L//^b//^L//"
                  "^b//^L//^b//^L//^b//^L//^b//^L^L//^b//^L//^b//^L//^b//^L//^b//^L/\r\n"
-                 "^b/^L/  ^L \\_\\                                 ^rcondition monitor           ^L/^b/\r\n", sizeof(buf));
+                 "^b/^L/  ^L \\_\\                                 ^rcondition monitor           ^L/^b/\r\n");
     
     snprintf(screenreader_buf, sizeof(screenreader_buf), "Score sheet for %s:\r\n", GET_CHAR_NAME(ch));
     
-    strcat(buf, "^L/^b/^L `//-\\\\                      ^gMent: ");
+    STRCAT(buf, "^L/^b/^L `//-\\\\                      ^gMent: ");
     int mental = GET_MENTAL(ch), physical = GET_PHYSICAL(ch);
     bool pain_editor = FALSE;
     for (struct obj_data *bio = ch->bioware; bio; bio = bio->next_content)
@@ -3246,106 +3247,106 @@ ACMD(do_score)
         break;
       }
     if (pain_editor) {
-      strcat(buf, " ^YMasked by pain editor.      ^b/^L/\r\n");
+      STRCAT(buf, " ^YMasked by pain editor.      ^b/^L/\r\n");
     } else {
       if (mental >= 900 && mental < 1000)
-        strcat(buf, "^b[^R*^b]");
+        STRCAT(buf, "^b[^R*^b]");
       else
-        strcat(buf, "^b[^gL^b]");
+        STRCAT(buf, "^b[^gL^b]");
       if (mental >= 800 && mental < 900)
-        strcat(buf, "^b[^R*^b]");
+        STRCAT(buf, "^b[^R*^b]");
       else
-        strcat(buf, "^b[ ]");
+        STRCAT(buf, "^b[ ]");
       if (mental >= 700 && mental < 800)
-        strcat(buf, "^b[^R*^b]");
+        STRCAT(buf, "^b[^R*^b]");
       else
-        strcat(buf, "^b[^yM^b]");
+        STRCAT(buf, "^b[^yM^b]");
       if (mental >= 600 && mental < 700)
-        strcat(buf, "^b[^R*^b]");
+        STRCAT(buf, "^b[^R*^b]");
       else
-        strcat(buf, "^b[ ]");
+        STRCAT(buf, "^b[ ]");
       if (mental >= 500 && mental < 600)
-        strcat(buf, "^b[^R*^b]");
+        STRCAT(buf, "^b[^R*^b]");
       else
-        strcat(buf, "^b[ ]");
+        STRCAT(buf, "^b[ ]");
       if (mental >= 400 && mental < 500)
-        strcat(buf, "^b[^R*^b]");
+        STRCAT(buf, "^b[^R*^b]");
       else
-        strcat(buf, "^b[^rS^b]");
+        STRCAT(buf, "^b[^rS^b]");
       if (mental >= 300 && mental < 400)
-        strcat(buf, "^b[^R*^b]");
+        STRCAT(buf, "^b[^R*^b]");
       else
-        strcat(buf, "^b[ ]");
+        STRCAT(buf, "^b[ ]");
       if (mental >= 200 && mental < 300)
-        strcat(buf, "^b[^R*^b]");
+        STRCAT(buf, "^b[^R*^b]");
       else
-        strcat(buf, "^b[ ]");
+        STRCAT(buf, "^b[ ]");
       if (mental >= 100 && mental < 200)
-        strcat(buf, "^b[^R*^b]");
+        STRCAT(buf, "^b[^R*^b]");
       else
-        strcat(buf, "^b[ ]");
+        STRCAT(buf, "^b[ ]");
       if (mental < 100)
-        strcat(buf, "^b[^R*^b]");
+        STRCAT(buf, "^b[^R*^b]");
       else
-        strcat(buf, "^b[^RD^b]");
-      strcat(buf, "  ^b/^L/\r\n");
+        STRCAT(buf, "^b[^RD^b]");
+      STRCAT(buf, "  ^b/^L/\r\n");
     }
       
-    strcat(buf, "^b/^L/ ^L`\\\\-\\^wHADOWRUN 3rd Edition   ^rPhys: ");
+    STRCAT(buf, "^b/^L/ ^L`\\\\-\\^wHADOWRUN 3rd Edition   ^rPhys: ");
     if (pain_editor) {
-      strcat(buf, " ^YMasked by pain editor.        ^L/^b/\r\n");
+      STRCAT(buf, " ^YMasked by pain editor.        ^L/^b/\r\n");
     } else {
       if (physical >= 900 && physical < 1000)
-        strcat(buf, "^L[^R*^L]");
+        STRCAT(buf, "^L[^R*^L]");
       else
-        strcat(buf, "^L[^gL^L]");
+        STRCAT(buf, "^L[^gL^L]");
       if (physical >= 800 && physical < 900)
-        strcat(buf, "^L[^R*^L]");
+        STRCAT(buf, "^L[^R*^L]");
       else
-        strcat(buf, "^L[ ]");
+        STRCAT(buf, "^L[ ]");
       if (physical >= 700 && physical < 800)
-        strcat(buf, "^L[^R*^L]");
+        STRCAT(buf, "^L[^R*^L]");
       else
-        strcat(buf, "^L[^yM^L]");
+        STRCAT(buf, "^L[^yM^L]");
       if (physical >= 600 && physical < 700)
-        strcat(buf, "^L[^R*^L]");
+        STRCAT(buf, "^L[^R*^L]");
       else
-        strcat(buf, "^L[ ]");
+        STRCAT(buf, "^L[ ]");
       if (physical >= 500 && physical < 600)
-        strcat(buf, "^L[^R*^L]");
+        STRCAT(buf, "^L[^R*^L]");
       else
-        strcat(buf, "^L[ ]");
+        STRCAT(buf, "^L[ ]");
       if (physical >= 400 && physical < 500)
-        strcat(buf, "^L[^R*^L]");
+        STRCAT(buf, "^L[^R*^L]");
       else
-        strcat(buf, "^L[^rS^L]");
+        STRCAT(buf, "^L[^rS^L]");
       if (physical >= 300 && physical < 400)
-        strcat(buf, "^L[^R*^L]");
+        STRCAT(buf, "^L[^R*^L]");
       else
-        strcat(buf, "^L[ ]");
+        STRCAT(buf, "^L[ ]");
       if (physical >= 200 && physical < 300)
-        strcat(buf, "^L[^R*^L]");
+        STRCAT(buf, "^L[^R*^L]");
       else
-        strcat(buf, "^L[ ]");
+        STRCAT(buf, "^L[ ]");
       if (physical >= 100 && physical < 200)
-        strcat(buf, "^L[^R*^L]");
+        STRCAT(buf, "^L[^R*^L]");
       else
-        strcat(buf, "^L[ ]");
+        STRCAT(buf, "^L[ ]");
       if (physical < 100)
-        strcat(buf, "^L[^R*^L]");
+        STRCAT(buf, "^L[^R*^L]");
       else
-        strcat(buf, "^L[^RD^L]");
-      strcat(buf, "  ^L/^b/\r\n");
+        STRCAT(buf, "^L[^RD^L]");
+      STRCAT(buf, "  ^L/^b/\r\n");
     }
     
     if (pain_editor) {
-      strcat(buf, "^L/^b/  ^L///-\\  ^wcharacter sheet                                           ^b/^L/\r\n");
+      STRCAT(buf, "^L/^b/  ^L///-\\  ^wcharacter sheet                                           ^b/^L/\r\n");
     } else {
-      strcat(buf, "^L/^b/  ^L///-\\  ^wcharacter sheet           ^LPhysical Damage Overflow: ");
+      STRCAT(buf, "^L/^b/  ^L///-\\  ^wcharacter sheet           ^LPhysical Damage Overflow: ");
       if (physical < 0)
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "^R[%2d]  ^b/^L/\r\n", (int)(physical / 100) * -1);
       else
-        strcat(buf, "^R[ 0]  ^b/^L/\r\n");
+        STRCAT(buf, "^R[ 0]  ^b/^L/\r\n");
     }
     
     /* Calculate the various bits of data that the score sheet needs. */
@@ -3361,27 +3362,27 @@ ACMD(do_score)
       else
         snprintf(out_of_body_string, sizeof(out_of_body_string), "You are occupying the body of %s.", GET_NAME(ch));
     } else {
-      strcpy(out_of_body_string, "");
+      STRCPY(out_of_body_string, "");
     }
     
     static char invisibility_string[50];
     if (IS_AFFECTED(ch, AFF_INVISIBLE) || IS_AFFECTED(ch, AFF_IMP_INVIS) || IS_AFFECTED(ch, AFF_SPELLINVIS) || IS_AFFECTED(ch, AFF_SPELLIMPINVIS))
-      strcpy(invisibility_string, "You are invisible.");
+      STRCPY(invisibility_string, "You are invisible.");
     else
-      strcpy(invisibility_string, "");
+      STRCPY(invisibility_string, "");
     
     
     char shaman_string[50];
     if (GET_TRADITION(ch) == TRAD_SHAMANIC)
       snprintf(shaman_string, sizeof(shaman_string), "You follow %s.", totem_types[GET_TOTEM(ch)]);
     else
-      strcpy(shaman_string, "");
+      STRCPY(shaman_string, "");
     
     static char grade_string[50];
     if (GET_TRADITION(ch) != TRAD_MUNDANE)
       snprintf(grade_string, sizeof(grade_string), "^nGrade: ^w[^W%2d^w]", GET_GRADE(ch));
     else
-      strcpy(grade_string, "");
+      STRCPY(grade_string, "");
     
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "^b/^L/  ^L\\\\@//                                                            ^L/^b/\r\n");
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "^L/^b/   ^L`^^                                                              ^b/^L/\r\n");
@@ -3421,7 +3422,7 @@ ACMD(do_score)
                           GET_BALLISTIC(ch), GET_IMPACT(ch), AFF_FLAGGED(ch, AFF_SNEAK) ? "You are sneaking." : "");
     snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "^b/^L/ ^nNuyen     ^w[^W%'9ld^w]    %11s   Social Bonus: [^W%3d / %3d^n]  ^L/^b/\r\n",
                           GET_NUYEN(ch), grade_string, GET_CONGREGATION_BONUS(ch), MAX_CONGREGATION_BONUS);
-    strcat(buf, "^L/^b/                                                                   ^b/^L/\r\n"
+    STRCAT(buf, "^L/^b/                                                                   ^b/^L/\r\n"
             "^L//^b//^L//^b//^L//^b//^L//^b//^L//^b//^L//^b//^L//^b//"
             "^L//^b//^L//^b//^L//^b//^L//^b//^L//^b//^L//^b//^L//"
             "^b//^L^L//^b//^L//^b//^L//^b//^L//^b/\r\n");
@@ -3429,22 +3430,22 @@ ACMD(do_score)
     // Compose the remainder of the screenreader score.
     
     // Health:
-    strcat(screenreader_buf, get_plaintext_score_health(ch));
+    STRCAT(screenreader_buf, get_plaintext_score_health(ch));
     
     // Attributes:
-    strcat(screenreader_buf, get_plaintext_score_stats(ch));
+    STRCAT(screenreader_buf, get_plaintext_score_stats(ch));
     
     // Derived stats:
-    strcat(screenreader_buf, get_plaintext_score_essence(ch));
+    STRCAT(screenreader_buf, get_plaintext_score_essence(ch));
     
     // Equipment attributes:
-    strcat(screenreader_buf, get_plaintext_score_equipment(ch));
+    STRCAT(screenreader_buf, get_plaintext_score_equipment(ch));
     
     // Karma stats.
-    strcat(screenreader_buf, get_plaintext_score_karma(ch));
+    STRCAT(screenreader_buf, get_plaintext_score_karma(ch));
     
     // Condition and misc affects.
-    strcat(screenreader_buf, get_plaintext_score_misc(ch));
+    STRCAT(screenreader_buf, get_plaintext_score_misc(ch));
   }
   if (PRF_FLAGGED(ch, PRF_SCREENREADER))
     send_to_char(screenreader_buf, ch);
@@ -3536,7 +3537,7 @@ ACMD(do_equipment)
 
 ACMD_CONST(do_time) {
   char not_const[MAX_STRING_LENGTH];
-  strcpy(not_const, argument);
+  STRCPY(not_const, argument);
   ACMD_DECLARE(do_time);
   do_time(ch, not_const, cmd, subcmd);
 }
@@ -3769,10 +3770,10 @@ ACMD(do_wizhelp)
           && GET_LEVEL(vict) >= cmd_info[cmd_num].minimum_level) {
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%-13s", cmd_info[cmd_num].command);
         if (!(no % 6))
-          strcat(buf, "\r\n");
+          STRCAT(buf, "\r\n");
         no++;
       }
-    strcat(buf, "\r\n");
+    STRCAT(buf, "\r\n");
     send_to_char(buf, ch);
     return;
   }
@@ -3799,10 +3800,10 @@ ACMD(do_wizhelp)
    && GET_LEVEL(vict) >= cmd_info[cmd_num].minimum_level) {
    snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%-13s", cmd_info[cmd_num].command);
    if (!(no % 6))
-   strcat(buf, "\r\n");
+   STRCAT(buf, "\r\n");
    no++;
    }
-   strcat(buf, "\r\n");
+   STRCAT(buf, "\r\n");
    send_to_char(buf, ch);
    return;
    }
@@ -3817,7 +3818,7 @@ ACMD(do_wizhelp)
 
 ACMD_CONST(do_who) {
   char not_const[MAX_STRING_LENGTH];
-  strcpy(not_const, argument);
+  STRCPY(not_const, argument);
   ACMD_DECLARE(do_who);
   do_who(ch, not_const, cmd, subcmd);
 }
@@ -3831,7 +3832,7 @@ ACMD(do_who)
   int output_header;
   
   skip_spaces(&argument);
-  strcpy(buf, argument);
+  STRCPY(buf, argument);
   if (subcmd)
     level = 1;
   while (*buf) {
@@ -3857,7 +3858,7 @@ ACMD(do_who)
       send_to_char(WHO_FORMAT, ch);
       return;
     }
-    strcpy(buf, buf1);
+    STRCPY(buf, buf1);
   }                             /* end while (parser) */
   
   *buf = '\0';
@@ -3897,9 +3898,9 @@ ACMD(do_who)
       if ( output_header ) {
         output_header = 0;
         if ( sort >= LVL_BUILDER )
-          strcat(buf, "\r\n^W Immortals ^L: ^WStaff Online\r\n ^w---------------------------\r\n");
+          STRCAT(buf, "\r\n^W Immortals ^L: ^WStaff Online\r\n ^w---------------------------\r\n");
         else
-          strcat(buf, "\r\n     ^W Race ^L: ^WVisible Players\r\n ^W---------------------------\r\n");
+          STRCAT(buf, "\r\n     ^W Race ^L: ^WVisible Players\r\n ^W---------------------------\r\n");
       }
       
       switch (GET_LEVEL(tch)) {
@@ -3945,22 +3946,22 @@ ACMD(do_who)
                 GET_CHAR_NAME(tch),
                 GET_TITLE(tch));
       }
-      strcat(buf1, buf2);
+      STRCAT(buf1, buf2);
       
       if (GET_PGROUP_MEMBER_DATA(tch) && GET_PGROUP(tch) && !(GET_PGROUP(tch)->is_secret())
           && GET_PGROUP_MEMBER_DATA(ch)
           && GET_PGROUP(ch) == GET_PGROUP(tch)) {
         snprintf(buf2, sizeof(buf2), " ^G(^g%s^G)^n", GET_PGROUP(tch)->get_alias());
-        strcat(buf1, buf2);
+        STRCAT(buf1, buf2);
       }
       
       if (PRF_FLAGGED(tch, PRF_AFK))
-        strcat(buf1, " (AFK)");
+        STRCAT(buf1, " (AFK)");
       if (PLR_FLAGGED(tch, PLR_RPE) && (level > LVL_MORTAL || PLR_FLAGGED(ch, PLR_RPE)))
-        strcat(buf1, " ^R(RPE)^n");
+        STRCAT(buf1, " ^R(RPE)^n");
       
       if (PRF_FLAGGED(tch, PRF_NEWBIEHELPER) && (level > LVL_MORTAL || PRF_FLAGGED(ch, PRF_NEWBIEHELPER)))
-        strcat(buf1, " ^G(Newbie Helper)^n");
+        STRCAT(buf1, " ^G(Newbie Helper)^n");
       
       if (level > LVL_MORTAL) {
         if (GET_INVIS_LEV(tch) && level >= GET_INVIS_LEV(tch))
@@ -3968,39 +3969,39 @@ ACMD(do_who)
         if (GET_INCOG_LEV(tch))
           snprintf(ENDOF(buf1), sizeof(buf1) - strlen(buf1), " (c%d)", GET_INCOG_LEV(tch));
         if (PLR_FLAGGED(tch, PLR_MAILING))
-          strcat(buf1, " (mailing)");
+          STRCAT(buf1, " (mailing)");
         else if (PLR_FLAGGED(tch, PLR_WRITING))
-          strcat(buf1, " (writing)");
+          STRCAT(buf1, " (writing)");
         if (PLR_FLAGGED(tch, PLR_EDITING))
-          strcat(buf1, " (editing)");
+          STRCAT(buf1, " (editing)");
         if (PRF_FLAGGED(tch, PRF_QUESTOR))
-          strcat(buf1, " ^Y(questor)^n");
+          STRCAT(buf1, " ^Y(questor)^n");
         if (PLR_FLAGGED(tch, PLR_NOT_YET_AUTHED))
-          strcat(buf1, " ^G(unauthed)^n");
+          STRCAT(buf1, " ^G(unauthed)^n");
         if (PLR_FLAGGED(tch, PLR_MATRIX))
-          strcat(buf1, " (decking)");
+          STRCAT(buf1, " (decking)");
         else if (PLR_FLAGGED(tch, PLR_PROJECT))
-          strcat(buf1, " (projecting)");
+          STRCAT(buf1, " (projecting)");
         else if (d->original) {
           if (IS_NPC(d->character) && GET_MOB_VNUM(d->character) >= 50 &&
               GET_MOB_VNUM(d->character) < 70)
-            strcat(buf1, " (morphed)");
+            STRCAT(buf1, " (morphed)");
           else
-            strcat(buf1, " (switched)");
+            STRCAT(buf1, " (switched)");
         }
       }
       if (!quest && PRF_FLAGGED(tch, PRF_QUEST))
-        strcat(buf1, " ^Y(hired)^n");
+        STRCAT(buf1, " ^Y(hired)^n");
       if (PRF_FLAGGED(tch, PRF_NOTELL))
-        strcat(buf1, " (!tell)");
+        STRCAT(buf1, " (!tell)");
       if (PLR_FLAGGED(tch, PLR_KILLER))
-        strcat(buf1, " ^R(KILLER)^N");
+        STRCAT(buf1, " ^R(KILLER)^N");
       if (PLR_FLAGGED(tch, PLR_BLACKLIST))
-        strcat(buf1, " ^L(BLACKLISTED)^N");
+        STRCAT(buf1, " ^L(BLACKLISTED)^N");
       if (PLR_FLAGGED(tch, PLR_WANTED))
-        strcat(buf1, " ^R(WANTED)^N");
-      strcat(buf1, "\r\n");
-      strcat(buf, buf1);
+        STRCAT(buf1, " ^R(WANTED)^N");
+      STRCAT(buf1, "\r\n");
+      STRCAT(buf, buf1);
       
       CGLOB = KNRM;
     }
@@ -4121,7 +4122,7 @@ ACMD(do_users)
   
   host_search[0] = name_search[0] = '\0';
   
-  strcpy(buf, argument);
+  STRCPY(buf, argument);
   while (*buf) {
     half_chop(buf, arg, buf1);
     if (*arg == '-') {
@@ -4131,15 +4132,15 @@ ACMD(do_users)
         case 'k':
           outlaws = 1;
           playing = 1;
-          strcpy(buf, buf1);
+          STRCPY(buf, buf1);
           break;
         case 'p':
           playing = 1;
-          strcpy(buf, buf1);
+          STRCPY(buf, buf1);
           break;
         case 'd':
           deadweight = 1;
-          strcpy(buf, buf1);
+          STRCPY(buf, buf1);
           break;
         case 'n':
           playing = 1;
@@ -4159,8 +4160,8 @@ ACMD(do_users)
       return;
     }
   }                             /* end while (parser) */
-  strcpy(line, "Num  Name           State           Idle Login@   Site\r\n");
-  strcat(line, "---- -------------- --------------- ---- -------- ---------------------------\r\n");
+  STRCPY(line, "Num  Name           State           Idle Login@   Site\r\n");
+  STRCAT(line, "---- -------------- --------------- ---- -------- ---------------------------\r\n");
   send_to_char(line, ch);
   
   one_argument(argument, arg);
@@ -4196,14 +4197,14 @@ ACMD(do_users)
     *(timeptr + 8) = '\0';
     
     if (!d->connected && d->original)
-      strcpy(state, "Switched");
+      STRCPY(state, "Switched");
     else
-      strcpy(state, connected_types[d->connected]);
+      STRCPY(state, connected_types[d->connected]);
     
     if (d->character && !d->connected)
       snprintf(idletime, sizeof(idletime), "%4d", d->character->char_specials.timer);
     else
-      strcpy(idletime, "");
+      STRCPY(idletime, "");
     
     format = "%-4d %-14s %-15s %-4s %-8s ";
     
@@ -4225,7 +4226,7 @@ ACMD(do_users)
     
     if (d->connected) {
       snprintf(line2, sizeof(line2), "^g%s^n", line);
-      strcpy(line, line2);
+      STRCPY(line, line2);
     }
     if ((d->connected && !d->character) || CAN_SEE(ch, d->character)) {
       send_to_char(line, ch);
@@ -4269,10 +4270,10 @@ ACMD(do_gen_ps)
       send_to_char("\033[H\033[J", ch);
       break;
     case SCMD_VERSION:
-      send_to_char(strcat(strcpy(buf, *awakemud_version), "\r\n"), ch);
+      send_to_char(ch, "%s\r\n", awakemud_version);
       break;
     case SCMD_WHOAMI:
-      send_to_char(strcat(strcpy(buf, GET_CHAR_NAME(ch)), "\r\n"), ch);
+      send_to_char(ch, "%s\r\n", GET_CHAR_NAME(ch));
       break;
     default:
       return;
@@ -4324,7 +4325,7 @@ void perform_immort_where(struct char_data * ch, char *arg)
   
   if (!*arg)
   {
-    strcpy(buf, "Players\r\n-------\r\n");
+    STRCPY(buf, "Players\r\n-------\r\n");
     for (d = descriptor_list; d; d = d->next)
       if (!d->connected) {
         i = (d->original ? d->original : d->character);
@@ -4373,7 +4374,7 @@ void perform_immort_where(struct char_data * ch, char *arg)
         if (i->in_veh) {
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " (in %s^n)\r\n", GET_VEH_NAME(i->in_veh));
         } else {
-          strcat(buf, "\r\n");
+          STRCAT(buf, "\r\n");
         }
       }
     found2 = ObjList.PrintList(ch, arg);
@@ -4607,7 +4608,7 @@ ACMD(do_commands)
            (IS_NPC(vict) && vict->desc->original && GET_REAL_LEVEL(vict->desc->original) >= mtx_info[cmd_num].minimum_level))) {
             snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%-13s", mtx_info[cmd_num].command);
             if (!(no % 7) || PRF_FLAGGED(ch, PRF_SCREENREADER))
-              strcat(buf, "\r\n");
+              STRCAT(buf, "\r\n");
             no++;
             if (*mtx_info[cmd_num].command == '\n')
               break;
@@ -4624,7 +4625,7 @@ ACMD(do_commands)
            (IS_NPC(vict) && vict->desc->original && GET_REAL_LEVEL(vict->desc->original) >= rig_info[cmd_num].minimum_level))) {
             snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%-13s", rig_info[cmd_num].command);
             if (!(no % 7) || PRF_FLAGGED(ch, PRF_SCREENREADER))
-              strcat(buf, "\r\n");
+              STRCAT(buf, "\r\n");
             no++;
             if (*rig_info[cmd_num].command == '\n')
               break;
@@ -4644,12 +4645,12 @@ ACMD(do_commands)
           (socials == cmd_sort_info[i].is_social)) {
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), "%-13s", cmd_info[i].command);
         if (!(no % 7) || PRF_FLAGGED(ch, PRF_SCREENREADER))
-          strcat(buf, "\r\n");
+          STRCAT(buf, "\r\n");
         no++;
       }
     }
   }
-  strcat(buf, "\r\n");
+  STRCAT(buf, "\r\n");
   send_to_char(buf, ch);
 }
 
@@ -4697,7 +4698,7 @@ ACMD(do_scan)
         onethere = FALSE;
         if (!((!infra && light_level(EXIT(ch, i)->to_room) == LIGHT_FULLDARK) ||
               ((!infra || !lowlight) && (light_level(EXIT(ch, i)->to_room) == LIGHT_MINLIGHT || light_level(EXIT(ch, i)->to_room) == LIGHT_PARTLIGHT)))) {
-          strcpy(buf1, "");
+          STRCPY(buf1, "");
           for (list = EXIT(ch, i)->to_room->people; list; list = list->next_in_room)
             if (CAN_SEE(ch, list)) {
               if (in_veh) {
@@ -4774,7 +4775,7 @@ ACMD(do_scan)
       for (j = 0;!done && (j < dist); ++j) {
         onethere = FALSE;
         if (CAN_GO(ch, i)) {
-          strcpy(buf1, "");
+          STRCPY(buf1, "");
           for (list = EXIT(ch, i)->to_room->people; list; list = list->next_in_room)
             if (CAN_SEE(ch, list)) {
               if (in_veh) {
@@ -4895,7 +4896,7 @@ ACMD(do_status)
     send_to_char(ch, "  %s (%s)\r\n", drug_types[GET_DRUG_AFFECT(targ)].name, GET_DRUG_STAGE(targ) == 1 ? "Up" : "Down");
   for (struct sustain_data *sust = GET_SUSTAINED(targ); sust; sust = sust->next)
     if (!sust->caster) {
-      strcpy(buf, spells[sust->spell].name);
+      STRCPY(buf, spells[sust->spell].name);
       if (sust->spell == SPELL_INCATTR || sust->spell == SPELL_INCCYATTR ||
           sust->spell == SPELL_DECATTR || sust->spell == SPELL_DECCYATTR)
         snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " (%s)", attributes[sust->subtype]);
@@ -4907,7 +4908,7 @@ ACMD(do_status)
     int i = 1;
     for (struct sustain_data *sust = GET_SUSTAINED(targ); sust; sust = sust->next)
       if (sust->caster || sust->spirit == targ) {
-        strcpy(buf, spells[sust->spell].name);
+        STRCPY(buf, spells[sust->spell].name);
         if (sust->spell == SPELL_INCATTR || sust->spell == SPELL_INCCYATTR ||
             sust->spell == SPELL_DECATTR || sust->spell == SPELL_DECCYATTR)
           snprintf(ENDOF(buf), sizeof(buf) - strlen(buf), " (%s)", attributes[sust->subtype]);

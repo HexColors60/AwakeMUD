@@ -11,6 +11,7 @@
 #include "constants.h"
 #include "olc.h"
 #include "newmagic.h"
+#include "string_safety.h"
 
 #define CH d->character
 #define PEDIT_MENU 0
@@ -43,7 +44,7 @@ void pedit_disp_program_menu(struct descriptor_data *d)
 {
   CLS(CH);
   
-  strncpy(buf, "", sizeof(buf) - 1);
+  STRCPY(buf, "");
   
   bool screenreader_mode = PRF_FLAGGED(d->character, PRF_SCREENREADER);
   for (int counter = 1; counter < NUM_PROGRAMS; counter++)
