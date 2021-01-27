@@ -693,6 +693,10 @@ bool load_char(const char *name, char_data *ch, bool logon)
             }
           if (last_obj)
             obj_to_obj(obj, last_obj);
+          else {
+            mudlog("SYSERR: Unable to load cyberware inside obj as expected. Putting in inventory.", ch, LOG_SYSLOG, TRUE);
+            obj_to_char(obj, ch);
+          }
         } else obj_to_cyberware(obj, ch);
         last_in = inside;
         last_obj = obj;
@@ -777,6 +781,10 @@ bool load_char(const char *name, char_data *ch, bool logon)
             }
           if (last_obj)
             obj_to_obj(obj, last_obj);
+          else {
+            mudlog("SYSERR: Unable to load obj inside obj as expected. Putting in inventory.", ch, LOG_SYSLOG, TRUE);
+            obj_to_char(obj, ch);
+          }
         } else
           equip_char(ch, obj, atoi(row[18]));
         last_in = inside;
@@ -857,6 +865,10 @@ bool load_char(const char *name, char_data *ch, bool logon)
             }
           if (last_obj)
             obj_to_obj(obj, last_obj);
+          else {
+            mudlog("SYSERR: Unable to load obj inside obj as expected. Putting in inventory.", ch, LOG_SYSLOG, TRUE);
+            obj_to_char(obj, ch);
+          }
         } else
           obj_to_char(obj, ch);
         last_in = inside;
